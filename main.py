@@ -1,7 +1,8 @@
 import os
 import numpy as np
 from read_knapsack_data import read_knapsack_data
-from greedy_heuristic import greedy_heuristic
+from heuristics.greedy_heuristic import greedy_heuristic
+from heuristics.repair_heuristic import repair_heuristic
 
 
 def test_read_knapsack_data():
@@ -59,7 +60,7 @@ def test_greedy_heuristic():
         print(f"\nInstance {i + 1}:")
         print(f"  - Nombre de projets (N): {instance['N']}")
         print(f"  - Nombre de ressources (M): {instance['M']}")
-        print(f"  - Valeur optimale: {instance['optimal_value']}")
+        print(f"  - Profit optimal: {instance['optimal_value']}")
 
         # Convertir les données en NumPy arrays
         profits = np.array(instance['profits'], dtype=np.float64)
@@ -77,9 +78,55 @@ def test_greedy_heuristic():
 
         # Résultats
         print(f"  - Solution trouvée: {solution}")
-        print(f"  - Profit total: {total_profit}")
+        print(f"  - Profit trouvé {total_profit}")
+
+
+def test_repair_heuristic():
+    # Charger les instances
+    test_file_path = os.path.join("instances", "mknap1.txt")
+
+    if not os.path.exists(test_file_path):
+        print(f"Fichier de test non trouvé : {test_file_path}")
+        return
+
+    # Lire les données
+    try:
+        data = read_knapsack_data(test_file_path)
+    except Exception as e:
+        print(f"Erreur lors de la lecture des données : {e}")
+        return
+
+    # Tester l'heuristique sur chaque instance
+    for i, instance in enumerate(data):
+        print(f"\nInstance {i + 1}:")
+        print(f"  - Nombre de projets (N): {instance['N']}")
+        print(f"  - Nombre de ressources (M): {instance['M']}")
+        print(f"  - Profit optimal: {instance['optimal_value']}")
+
+        # Convertir les données en NumPy arrays
+        profits = np.array(instance['profits'], dtype=np.float64)
+        resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
+        resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
+
+        # Générer une solution initiale irréalisable (tous les projets sélectionnés)
+        initial_solution = np.ones(instance['N'], dtype=np.int32)
+
+        # Exécuter l'heuristique de réparation
+        repaired_solution, total_profit = repair_heuristic(
+            instance['N'],
+            instance['M'],
+            initial_solution,
+            resource_consumption,
+            resource_availabilities,
+            profits
+        )
+
+        # Résultats
+        print(f"  - Solution initiale (non faisable): {initial_solution}")
+        print(f"  - Solution réparée (faisable): {repaired_solution}")
+        print(f"  - Profit trouvé: {total_profit}")
 
 
 if __name__ == "__main__":
     test_read_knapsack_data()
-    test_greedy_heuristic()
+    test_repair_heuristic()

@@ -1,3 +1,8 @@
+import numpy as np
+from numba import njit
+
+
+@njit
 def repair_heuristic(N, M, solution, resource_consumption, resource_availabilities, profits):
     """
     Implements a repair heuristic to adjust an infeasible solution to make it feasible.
@@ -5,40 +10,40 @@ def repair_heuristic(N, M, solution, resource_consumption, resource_availabiliti
     Args:
         N (int): Number of projects.
         M (int): Number of resources.
-        solution (list): Initial solution vector (list of 0s and 1s, may be infeasible).
-        resource_consumption (list of lists): Resource consumption matrix.
-        resource_availabilities (list): List of available quantities for each resource.
-        profits (list): List of profits for each project.
+        solution (np.ndarray): Initial solution vector (array of 0s and 1s, may be infeasible).
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        resource_availabilities (np.ndarray): Array of available quantities for each resource.
+        profits (np.ndarray): Array of profits for each project.
 
     Returns:
-        list: A feasible solution vector (list of 0s and 1s).
-        int: Total profit of the repaired solution.
+        np.ndarray: A feasible solution vector (array of 0s and 1s).
+        float: Total profit of the repaired solution.
     """
     # Calculate total resource usage for the current solution
-    used_resources = [0] * M
+    used_resources = np.zeros(M)
     for i in range(M):
-        used_resources[i] = sum(resource_consumption[i][j] * solution[j] for j in range(N))
+        used_resources[i] = np.sum(resource_consumption[i, :] * solution)
 
     # Check feasibility
-    infeasible = any(used_resources[i] > resource_availabilities[i] for i in range(M))
+    infeasible = np.any(used_resources > resource_availabilities)
 
     # If already feasible, return the solution
     if not infeasible:
-        total_profit = sum(profits[j] * solution[j] for j in range(N))
+        total_profit = np.sum(profits * solution)
         return solution, total_profit
 
     # If infeasible, repair the solution
     # Compute profit-to-resource ratios
-    ratios = []
+    ratios = np.zeros(N)
     for j in range(N):
-        total_resource = sum(resource_consumption[i][j] for i in range(M))
+        total_resource = np.sum(resource_consumption[:, j])
         if total_resource > 0:
-            ratios.append(profits[j] / total_resource)
+            ratios[j] = profits[j] / total_resource
         else:
-            ratios.append(0)
+            ratios[j] = 0
 
     # Sort projects by ascending ratio (least efficient projects first)
-    sorted_projects = sorted(range(N), key=lambda x: ratios[x])
+    sorted_projects = np.argsort(ratios)
 
     # Remove projects from the solution until it becomes feasible
     for j in sorted_projects:
@@ -46,20 +51,21 @@ def repair_heuristic(N, M, solution, resource_consumption, resource_availabiliti
             # Remove project j
             solution[j] = 0
             for i in range(M):
-                used_resources[i] -= resource_consumption[i][j]
+                used_resources[i] -= resource_consumption[i, j]
 
             # Check if the solution is now feasible
-            if all(used_resources[i] <= resource_availabilities[i] for i in range(M)):
+            if np.all(used_resources <= resource_availabilities):
                 break
 
     # Calculate total profit of the repaired solution
-    total_profit = sum(profits[j] * solution[j] for j in range(N))
+    total_profit = np.sum(profits * solution)
 
     return solution, total_profit
 
+
 # Example usage:
 # Assuming data is loaded from the previous function:
-# data = read_mknap_data("mknap1.txt")
+# data = read_knapsack_data("mknap1.txt")
 # instance = data[0]  # Use the first instance as an example
 # initial_solution = [1] * instance['N']  # Example: all projects initially selected
 # repaired_solution, total_profit = repair_heuristic(
