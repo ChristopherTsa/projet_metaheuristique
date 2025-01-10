@@ -40,16 +40,16 @@ def read_knapsack_data(file_path):
             except (IndexError, ValueError) as e:
                 raise ValueError(f"Erreur de lecture des paramètres pour l'instance {instance_idx + 1} à la ligne {idx}: {e}")
 
-            # Lire les profits
+            # Lire les gains
             profits = []
             while len(profits) < N:
                 if idx >= total_lines:
-                    raise ValueError(f"Données insuffisantes pour les profits de l'instance {instance_idx + 1}.")
+                    raise ValueError(f"Données insuffisantes pour les gains de l'instance {instance_idx + 1}.")
                 profits_line = list(map(float, lines[idx].split()))
                 profits.extend(profits_line)
                 idx += 1
             if len(profits) > N:
-                raise ValueError(f"Trop de valeurs de profits pour l'instance {instance_idx + 1}.")
+                raise ValueError(f"Trop de valeurs de gains pour l'instance {instance_idx + 1}.")
 
             # Lire la consommation des ressources
             resource_consumption = []
