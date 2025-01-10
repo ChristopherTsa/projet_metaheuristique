@@ -21,9 +21,16 @@ def test_read_knapsack_data():
             print(f"  - Nombre de projets (N) : {instance['N']}")
             print(f"  - Nombre de ressources (M) : {instance['M']}")
             print(f"  - Valeur optimale : {instance['optimal_value']}")
-            print(f"  - Profits : {instance['profits']}")
-            print(f"  - Consommation des ressources : {instance['resource_consumption']}")
-            print(f"  - Disponibilités des ressources : {instance['resource_availabilities']}")
+            
+            print("  - Profits :")
+            print(instance['profits'])
+            
+            print("  - Consommation des ressources :")
+            for resource_idx, resource_row in enumerate(instance['resource_consumption']):
+                print(f"    Ressource {resource_idx + 1} : {resource_row}")
+            
+            print("  - Disponibilités des ressources :")
+            print(instance['resource_availabilities'])
 
         print("\nTest réussi : les données ont été correctement lues.")
     except Exception as e:
