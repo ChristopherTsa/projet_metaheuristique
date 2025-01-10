@@ -3,7 +3,8 @@ import numpy as np
 from read_knapsack_data import read_knapsack_data
 from heuristics.greedy_heuristic import greedy_heuristic
 from heuristics.repair_heuristic import repair_heuristic
-
+from heuristics.nearest_neighbour_heuristic import nearest_neighbor_heuristic
+from heuristics.insertion_heuristic import insertion_heuristic
 
 def test_read_knapsack_data():
     # Chemin vers le fichier d'instances
@@ -127,6 +128,88 @@ def test_repair_heuristic():
         print(f"  - Profit trouvé: {total_profit}")
 
 
+def test_nearest_neighbor_heuristic():
+    # Charger les instances
+    test_file_path = os.path.join("instances", "mknap1.txt")
+
+    if not os.path.exists(test_file_path):
+        print(f"Fichier de test non trouvé : {test_file_path}")
+        return
+
+    # Lire les données
+    try:
+        data = read_knapsack_data(test_file_path)
+    except Exception as e:
+        print(f"Erreur lors de la lecture des données : {e}")
+        return
+
+    # Tester l'heuristique sur chaque instance
+    for i, instance in enumerate(data):
+        print(f"\nInstance {i + 1}:")
+        print(f"  - Nombre de projets (N): {instance['N']}")
+        print(f"  - Nombre de ressources (M): {instance['M']}")
+        print(f"  - Profit optimal: {instance['optimal_value']}")
+
+        # Convertir les données en NumPy arrays
+        profits = np.array(instance['profits'], dtype=np.float64)
+        resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
+        resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
+
+        # Exécuter l'heuristique du plus proche voisin
+        solution, total_profit = nearest_neighbor_heuristic(
+            instance['N'],
+            instance['M'],
+            profits,
+            resource_consumption,
+            resource_availabilities
+        )
+
+        # Résultats
+        print(f"  - Solution trouvée (faisable): {solution}")
+        print(f"  - Profit trouvé: {total_profit:.2f}")
+
+
+def test_insertion_heuristic():
+    # Charger les instances
+    test_file_path = os.path.join("instances", "mknap1.txt")
+
+    if not os.path.exists(test_file_path):
+        print(f"Fichier de test non trouvé : {test_file_path}")
+        return
+
+    # Lire les données
+    try:
+        data = read_knapsack_data(test_file_path)
+    except Exception as e:
+        print(f"Erreur lors de la lecture des données : {e}")
+        return
+
+    # Tester l'heuristique sur chaque instance
+    for i, instance in enumerate(data):
+        print(f"\nInstance {i + 1}:")
+        print(f"  - Nombre de projets (N): {instance['N']}")
+        print(f"  - Nombre de ressources (M): {instance['M']}")
+        print(f"  - Profit optimal: {instance['optimal_value']}")
+
+        # Convertir les données en NumPy arrays
+        profits = np.array(instance['profits'], dtype=np.float64)
+        resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
+        resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
+
+        # Exécuter l'heuristique par insertion
+        solution, total_profit = insertion_heuristic(
+            instance['N'],
+            instance['M'],
+            profits,
+            resource_consumption,
+            resource_availabilities
+        )
+
+        # Résultats
+        print(f"  - Solution trouvée (faisable): {solution}")
+        print(f"  - Profit trouvé: {total_profit:.2f}")
+
+
 if __name__ == "__main__":
     test_read_knapsack_data()
-    test_repair_heuristic()
+    test_insertion_heuristic()
