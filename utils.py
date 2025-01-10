@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def read_knapsack_data(file_path):
     """
     Reads a multidimensional knapsack data file and extracts the instances.
@@ -89,7 +92,14 @@ def read_knapsack_data(file_path):
     return instances
 
 
-# Example usage:
-# data = read_mknap_data("mknap1.txt")
-# for instance in data:
-#     print(instance)
+def calculate_profit(solution, profits):
+    """Calculate the total profit of a solution."""
+    return np.sum(profits * solution)
+
+
+def is_feasible(solution, M, resource_consumption, resource_availabilities):
+    """Check if a solution is feasible."""
+    for i in range(M):
+        if np.sum(resource_consumption[i, :] * solution) > resource_availabilities[i]:
+            return False
+    return True

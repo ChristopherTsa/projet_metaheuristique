@@ -1,7 +1,7 @@
 import numpy as np
-from numba import njit
+from utils import calculate_profit, is_feasible
 
-@njit
+
 def greedy_heuristic(N, M, profits, resource_consumption, resource_availabilities):
     """
     Implements a greedy heuristic for the multidimensional knapsack problem using Numba for optimization.
@@ -29,32 +29,19 @@ def greedy_heuristic(N, M, profits, resource_consumption, resource_availabilitie
     # Step 2: Sort projects by descending profit-to-resource ratio
     sorted_projects = np.argsort(ratios)[::-1]  # Indices sorted in descending order
 
-    # Step 3: Initialize solution and resource usage
+    # Step 3: Initialize solution
     solution = np.zeros(N, dtype=np.int32)
-    used_resources = np.zeros(M, dtype=np.float64)
 
     # Step 4: Add projects to the solution while respecting resource constraints
     for j in sorted_projects:
-        fits = True
-        for i in range(M):
-            if used_resources[i] + resource_consumption[i, j] > resource_availabilities[i]:
-                fits = False
-                break
-        if fits:
-            solution[j] = 1
-            for i in range(M):
-                used_resources[i] += resource_consumption[i, j]
+        # Create a temporary solution with the current project added
+        temp_solution = solution.copy()
+        temp_solution[j] = 1
+        # Check if the solution remains feasible
+        if is_feasible(temp_solution, M, resource_consumption, resource_availabilities):
+            solution = temp_solution
 
     # Step 5: Calculate total profit
-    total_profit = np.sum(profits * solution)
+    total_profit = calculate_profit(solution, profits)
 
     return solution, total_profit
-
-
-# Example usage:
-# Assuming data is loaded from the previous function:
-# data = read_mknap_data("mknap1.txt")
-# instance = data[0]  # Use the first instance as an example
-# solution, total_profit = greedy_heuristic(instance['N'], instance['M'], instance['profits'], instance['resource_consumption'], instance['resource_availabilities'])
-# print("Solution:", solution)
-# print("Total Profit:", total_profit)

@@ -1,11 +1,11 @@
 import os
 import numpy as np
 
-from read_knapsack_data import read_knapsack_data
+from utils import read_knapsack_data
 from heuristics.greedy_heuristic import greedy_heuristic
 from heuristics.repair_heuristic import repair_heuristic
 
-import hill_climbing.neighbours as neighbours
+import hill_climbing.neighborhoods as neighborhoods
 from hill_climbing.hill_climbing import hill_climbing
 
 from metaheuristic.simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
@@ -88,6 +88,8 @@ def test_greedy_heuristic():
 
 
 def test_repair_heuristic():
+    import os
+
     # Charger les instances
     test_file_path = os.path.join("instances", "mknap1.txt")
 
@@ -114,75 +116,18 @@ def test_repair_heuristic():
         resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
         resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
 
-        # Générer une solution initiale irréalisable (tous les projets sélectionnés)
-        initial_solution = np.ones(instance['N'], dtype=np.int32)
-
-        # Exécuter l'heuristique de réparation
+        # Exécuter l'heuristique de réparation avec la solution initiale issue de la relaxation surrogate
         repaired_solution, total_profit = repair_heuristic(
             instance['N'],
             instance['M'],
-            initial_solution,
             resource_consumption,
             resource_availabilities,
             profits
         )
 
         # Résultats
-        print(f"  - Solution initiale (non faisable): {initial_solution}")
         print(f"  - Solution réparée (faisable): {repaired_solution}")
         print(f"  - Profit trouvé: {total_profit}")
-
-def test_simulated_annealing_metaheuristic():
-    # Chemin vers le fichier d'instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
-    try:
-        # Lire les données
-        instances = read_knapsack_data(test_file_path)
-
-        print("Test de l'algorithme de recuit simulé sur les instances :")
-
-        # Tester l'algorithme sur chaque instance
-        for i, instance in enumerate(instances):
-            print(f"\nInstance {i + 1} :")
-            print(f"  - Nombre de projets (N) : {instance['N']}")
-            print(f"  - Nombre de ressources (M) : {instance['M']}")
-            print(f"  - Valeur optimale (si disponible) : {instance['optimal_value']}")
-
-            # Convertir les données en NumPy arrays
-            profits = np.array(instance['profits'], dtype=np.float64)
-            resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
-            resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
-
-            # Générer une solution initiale faisable (exemple : aucune sélection)
-            initial_solution = np.zeros(instance['N'], dtype=np.int32)
-
-            # Exécuter le recuit simulé
-            final_solution, total_profit = simulated_annealing_metaheuristic(
-                instance['N'],
-                instance['M'],
-                initial_solution,
-                resource_consumption,
-                resource_availabilities,
-                profits,
-                initial_temperature=1000,
-                cooling_rate=0.95,
-                max_iterations=1000
-            )
-
-            # Afficher les résultats
-            print(f"  - Solution finale : {final_solution}")
-            print(f"  - Profit final : {total_profit:.2f}")
-            if instance['optimal_value'] is not None:
-                print(f"  - Écart par rapport à l'optimal : {abs(instance['optimal_value'] - total_profit):.2f}")
-
-        print("\nTest réussi : l'algorithme a été exécuté sur toutes les instances.")
-    except Exception as e:
-        print(f"Une erreur est survenue lors de l'exécution de l'algorithme : {e}")
 
 
 def test_hill_climbing():
@@ -230,7 +175,7 @@ def test_hill_climbing():
                 resource_consumption,
                 resource_availabilities,
                 profits,
-                neighbours.three_opt_neighborhood
+                neighborhoods.multi_opt_neighborhood
             )
 
             # Afficher les résultats
@@ -245,6 +190,147 @@ def test_hill_climbing():
         print(f"Une erreur est survenue lors de l'exécution de l'algorithme : {e}")
 
 
+def test_simulated_annealing_metaheuristic():
+    # Chemin vers le fichier d'instances
+    test_file_path = os.path.join("instances", "mknap1.txt")
+
+    if not os.path.exists(test_file_path):
+        print(f"Fichier de test non trouvé : {test_file_path}")
+        return
+
+    try:
+        # Lire les données
+        instances = read_knapsack_data(test_file_path)
+
+        print("Test de l'algorithme de recuit simulé sur les instances :")
+
+        # Tester l'algorithme sur chaque instance
+        for i, instance in enumerate(instances):
+            print(f"\nInstance {i + 1} :")
+            print(f"  - Nombre de projets (N) : {instance['N']}")
+            print(f"  - Nombre de ressources (M) : {instance['M']}")
+            print(f"  - Valeur optimale (si disponible) : {instance['optimal_value']}")
+
+            # Convertir les données en NumPy arrays
+            profits = np.array(instance['profits'], dtype=np.float64)
+            resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
+            resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
+
+            # Générer une solution initiale faisable (exemple : aucune sélection)
+            initial_solution = np.zeros(instance['N'], dtype=np.int32)
+
+            # Exécuter le recuit simulé
+            final_solution, total_profit = simulated_annealing_metaheuristic(
+                instance['N'],
+                instance['M'],
+                resource_consumption,
+                resource_availabilities,
+                profits,
+                neighborhoods.multi_opt_neighborhood,
+                initial_temperature=1000,
+                cooling_rate=0.95,
+                max_iterations=1000,
+                epsilon=1e-3
+            )
+
+            # Afficher les résultats
+            print(f"  - Solution finale : {final_solution}")
+            print(f"  - Profit final : {total_profit:.2f}")
+            if instance['optimal_value'] is not None:
+                print(f"  - Écart par rapport à l'optimal : {abs(instance['optimal_value'] - total_profit):.2f}")
+
+        print("\nTest réussi : l'algorithme a été exécuté sur toutes les instances.")
+    except Exception as e:
+        print(f"Une erreur est survenue lors de l'exécution de l'algorithme : {e}")
+
+
+def compare_methods(instance_file):
+    # Vérifier si le fichier existe
+    if not os.path.exists(instance_file):
+        print(f"Fichier d'instance non trouvé : {instance_file}")
+        return
+
+    try:
+        # Lire les données
+        data = read_knapsack_data(instance_file)
+
+        print("Comparaison des méthodes sur les instances :")
+
+        # Comparer les méthodes pour chaque instance
+        for i, instance in enumerate(data):
+            print(f"\nInstance {i + 1} :")
+            print(f"  - Nombre de projets (N) : {instance['N']}")
+            print(f"  - Nombre de ressources (M) : {instance['M']}")
+            print(f"  - Valeur optimale (si disponible) : {instance['optimal_value']}")
+
+            # Convertir les données en NumPy arrays
+            profits = np.array(instance['profits'], dtype=np.float64)
+            resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
+            resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
+
+            # 1. Méthode gloutonne
+            greedy_solution, greedy_profit = greedy_heuristic(
+                instance['N'],
+                instance['M'],
+                profits,
+                resource_consumption,
+                resource_availabilities
+            )
+
+            print(f"  - [Greedy] Profit : {greedy_profit:.2f}")
+
+            # 2. Heuristique de réparation
+            repair_solution, repair_profit = repair_heuristic(
+                instance['N'],
+                instance['M'],
+                resource_consumption,
+                resource_availabilities,
+                profits
+            )
+
+            print(f"  - [Repair] Profit : {repair_profit:.2f}")
+
+            # 3. Hill climbing
+            hill_solution, hill_profit = hill_climbing(
+                instance['N'],
+                instance['M'],
+                greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
+                resource_consumption,
+                resource_availabilities,
+                profits,
+                neighborhoods.multi_opt_neighborhood
+            )
+
+            print(f"  - [Hill Climbing] Profit : {hill_profit:.2f}")
+
+            # 4. Recuit simulé
+            annealing_solution, annealing_profit = simulated_annealing_metaheuristic(
+                instance['N'],
+                instance['M'],
+                resource_consumption,
+                resource_availabilities,
+                profits,
+                neighborhoods.multi_opt_neighborhood,
+                initial_temperature=1000,
+                cooling_rate=0.95,
+                max_iterations=10000,
+                epsilon=1e-6
+            )
+
+            print(f"  - [Simulated Annealing] Profit : {annealing_profit:.2f}")
+
+            # Comparaison avec la valeur optimale si disponible
+            if instance['optimal_value'] is not None:
+                print(f"  - Écart [Greedy] : {abs(instance['optimal_value'] - greedy_profit):.2f}")
+                print(f"  - Écart [Repair] : {abs(instance['optimal_value'] - repair_profit):.2f}")
+                print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
+                print(f"  - Écart [Simulated Annealing] : {abs(instance['optimal_value'] - annealing_profit):.2f}")
+
+        print("\nComparaison terminée avec succès.")
+
+    except Exception as e:
+        print(f"Une erreur est survenue lors de l'exécution des comparaisons : {e}")
+
+
 if __name__ == "__main__":
-    test_read_knapsack_data()
-    test_hill_climbing()
+    compare_methods("instances/mknap1.txt")

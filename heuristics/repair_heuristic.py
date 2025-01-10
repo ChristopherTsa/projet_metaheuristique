@@ -1,16 +1,55 @@
 import numpy as np
-from numba import njit
+from utils import calculate_profit, is_feasible
 
 
-@njit
-def repair_heuristic(N, M, solution, resource_consumption, resource_availabilities, profits):
+def surrogate_relaxation_solution(N, M, resource_consumption, resource_availabilities, profits):
     """
-    Implements a repair heuristic to adjust an infeasible solution to make it feasible.
+    Generate an initial solution using the surrogate relaxation method.
 
     Args:
         N (int): Number of projects.
         M (int): Number of resources.
-        solution (np.ndarray): Initial solution vector (array of 0s and 1s, may be infeasible).
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        resource_availabilities (np.ndarray): Array of available resources for each resource type.
+        profits (np.ndarray): Array of profits for each project.
+
+    Returns:
+        np.ndarray: A surrogate relaxation solution (array of 0s and 1s).
+    """
+    # Compute weights for the surrogate constraint
+    weights = resource_availabilities / np.sum(resource_consumption, axis=1)
+
+    # Compute the surrogate profit-to-resource ratio
+    surrogate_ratios = np.zeros(N)
+    for j in range(N):
+        surrogate_resource = np.sum(weights * resource_consumption[:, j])
+        if surrogate_resource > 0:
+            surrogate_ratios[j] = profits[j] / surrogate_resource
+        else:
+            surrogate_ratios[j] = 0
+
+    # Sort projects by descending surrogate ratios
+    sorted_projects = np.argsort(surrogate_ratios)[::-1]
+
+    # Generate a greedy solution based on surrogate ratios
+    solution = np.zeros(N, dtype=np.int32)
+
+    for j in sorted_projects:
+        temp_solution = solution.copy()
+        temp_solution[j] = 1
+        if is_feasible(temp_solution, M, resource_consumption, resource_availabilities):
+            solution = temp_solution
+
+    return solution
+
+
+def repair_heuristic(N, M, resource_consumption, resource_availabilities, profits):
+    """
+    Implements a repair heuristic starting with a surrogate relaxation solution.
+
+    Args:
+        N (int): Number of projects.
+        M (int): Number of resources.
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
         resource_availabilities (np.ndarray): Array of available quantities for each resource.
         profits (np.ndarray): Array of profits for each project.
@@ -19,17 +58,12 @@ def repair_heuristic(N, M, solution, resource_consumption, resource_availabiliti
         np.ndarray: A feasible solution vector (array of 0s and 1s).
         float: Total profit of the repaired solution.
     """
-    # Calculate total resource usage for the current solution
-    used_resources = np.zeros(M) #aleatoire ou relaxation surrogate
-    for i in range(M):
-        used_resources[i] = np.sum(resource_consumption[i, :] * solution)
+    # Generate the initial solution using surrogate relaxation
+    solution = surrogate_relaxation_solution(N, M, resource_consumption, resource_availabilities, profits)
 
     # Check feasibility
-    infeasible = np.any(used_resources > resource_availabilities)
-
-    # If already feasible, return the solution
-    if not infeasible:
-        total_profit = np.sum(profits * solution)
+    if is_feasible(solution, M, resource_consumption, resource_availabilities):
+        total_profit = calculate_profit(solution, profits)
         return solution, total_profit
 
     # If infeasible, repair the solution
@@ -48,30 +82,13 @@ def repair_heuristic(N, M, solution, resource_consumption, resource_availabiliti
     # Remove projects from the solution until it becomes feasible
     for j in sorted_projects:
         if solution[j] == 1:
-            # Remove project j
-            solution[j] = 0
-            for i in range(M):
-                used_resources[i] -= resource_consumption[i, j]
-
-            # Check if the solution is now feasible
-            if np.all(used_resources <= resource_availabilities):
+            temp_solution = solution.copy()
+            temp_solution[j] = 0
+            if is_feasible(temp_solution, M, resource_consumption, resource_availabilities):
+                solution = temp_solution
                 break
 
     # Calculate total profit of the repaired solution
-    total_profit = np.sum(profits * solution)
+    total_profit = calculate_profit(solution, profits)
 
     return solution, total_profit
-
-
-# Example usage:
-# Assuming data is loaded from the previous function:
-# data = read_knapsack_data("mknap1.txt")
-# instance = data[0]  # Use the first instance as an example
-# initial_solution = [1] * instance['N']  # Example: all projects initially selected
-# repaired_solution, total_profit = repair_heuristic(
-#     instance['N'], instance['M'], initial_solution, 
-#     instance['resource_consumption'], instance['resource_availabilities'], 
-#     instance['profits']
-# )
-# print("Repaired Solution:", repaired_solution)
-# print("Total Profit:", total_profit)

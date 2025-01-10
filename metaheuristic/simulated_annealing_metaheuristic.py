@@ -1,61 +1,71 @@
 import numpy as np
-from numba import njit
+from utils import calculate_profit, is_feasible
 
-@njit
-def simulated_annealing_metaheuristic(N, M, initial_solution, resource_consumption, resource_availabilities, profits, 
-                                  initial_temperature=1000, cooling_rate=0.95, max_iterations=1000):
+
+def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 
+                                  generate_neighbors, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
     """
     Implements the Simulated Annealing metaheuristic for the multidimensional knapsack problem.
 
     Args:
         N (int): Number of projects.
         M (int): Number of resources.
-        initial_solution (np.ndarray): Initial feasible solution vector (array of 0s and 1s).
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
         resource_availabilities (np.ndarray): Available resources for each type.
         profits (np.ndarray): Array of profits for each project.
-        initial_temperature (float): Initial temperature for simulated annealing.
+        generate_neighbors (function): Function to generate a neighbor solution.
+        initial_temperature (float): Initial temperature for simulated annealing. If None, it is calculated dynamically.
         cooling_rate (float): Rate at which the temperature decreases.
         max_iterations (int): Maximum number of iterations for the algorithm.
+        epsilon (float): Minimum temperature threshold for stopping.
 
     Returns:
         np.ndarray: Final solution vector (array of 0s and 1s).
         float: Total profit of the final solution.
     """
-    def calculate_profit(solution):
-        """Calculate the total profit of a solution."""
-        return np.sum(profits * solution)
 
-    def is_feasible(solution):
-        """Check if a solution is feasible."""
-        for i in range(M):
-            if np.sum(resource_consumption[i, :] * solution) > resource_availabilities[i]:
-                return False
-        return True
+    def initialize_temperature():
+        """
+        Dynamically calculate the initial temperature using Method 2 (Kirkpatrick).
+        """
+        delta_fs = []
+        for _ in range(100):  # Test a number of transformations
+            solution = np.random.randint(0, 2, N)
+            if not is_feasible(solution, M, resource_consumption, resource_availabilities):
+                continue
+            neighbor = generate_neighbors(solution, 3)
+            if not is_feasible(neighbor, M, resource_consumption, resource_availabilities):
+                continue
 
-    def generate_neighbor(solution):
-        """Generate a random neighbor by flipping a single bit."""
-        neighbor = solution.copy()
-        j = np.random.randint(0, N)
-        neighbor[j] = 1 - neighbor[j]  # Flip inclusion status
-        return neighbor
+            delta_f = calculate_profit(neighbor, profits) - calculate_profit(solution, profits)
+            if delta_f > 0:
+                delta_fs.append(delta_f)
 
-    # Initialize the current solution and profit
-    current_solution = initial_solution.copy()
-    if not is_feasible(current_solution):
-        raise ValueError("Initial solution must be feasible.")
-    
-    current_profit = calculate_profit(current_solution)
+        mean_delta_f = np.mean(delta_fs) if delta_fs else 1
+        return -mean_delta_f / np.log(0.8)  # Assuming initial acceptance probability of 0.8
+
+    # Generate initial solution
+    current_solution = np.random.randint(0, 2, N)
+    while not is_feasible(current_solution, M, resource_consumption, resource_availabilities):
+        current_solution = np.random.randint(0, 2, N)
+
+    current_profit = calculate_profit(current_solution, profits)
     best_solution = current_solution.copy()
     best_profit = current_profit
 
-    temperature = initial_temperature
+    # Initialize temperature
+    if initial_temperature is None:
+        temperature = initialize_temperature()
+    else:
+        temperature = initial_temperature
 
-    for _ in range(max_iterations):
-        # Generate a neighbor solution
-        neighbor = generate_neighbor(current_solution)
-        if is_feasible(neighbor):
-            neighbor_profit = calculate_profit(neighbor)
+    iteration = 0
+
+    while temperature > epsilon and iteration < max_iterations:
+        # Generate a neighbor solution using the provided function
+        neighbor = generate_neighbors(current_solution, 3)
+        if is_feasible(neighbor, M, resource_consumption, resource_availabilities):
+            neighbor_profit = calculate_profit(neighbor, profits)
 
             # Decide whether to accept the neighbor
             profit_difference = neighbor_profit - current_profit
@@ -70,7 +80,6 @@ def simulated_annealing_metaheuristic(N, M, initial_solution, resource_consumpti
 
         # Cool down the temperature
         temperature *= cooling_rate
-        if temperature < 1e-3:
-            break
+        iteration += 1
 
     return best_solution, best_profit
