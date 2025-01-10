@@ -20,7 +20,7 @@ def repair_heuristic(N, M, solution, resource_consumption, resource_availabiliti
         float: Total profit of the repaired solution.
     """
     # Calculate total resource usage for the current solution
-    used_resources = np.zeros(M)
+    used_resources = np.zeros(M) #aleatoire ou relaxation surrogate
     for i in range(M):
         used_resources[i] = np.sum(resource_consumption[i, :] * solution)
 
