@@ -11,17 +11,10 @@ from hill_climbing.hill_climbing import hill_climbing
 from metaheuristic.simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
 
 
-def test_read_knapsack_data():
-    # Chemin vers le fichier d'instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
+def test_read_knapsack_data(instance_name):
     try:
         # Lire les données
-        instances = read_knapsack_data(test_file_path)
+        instances = read_knapsack_data(instance_name)
 
         # Affichage des données extraites
         print("Données extraites des instances :")
@@ -46,17 +39,10 @@ def test_read_knapsack_data():
         print(f"Une erreur est survenue lors de la lecture des données : {e}")
 
 
-def test_greedy_heuristic():
-    # Charger les instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
+def test_greedy_heuristic(instance_name):
     # Lire les données
     try:
-        data = read_knapsack_data(test_file_path)
+        data = read_knapsack_data(instance_name)
     except Exception as e:
         print(f"Erreur lors de la lecture des données : {e}")
         return
@@ -87,19 +73,10 @@ def test_greedy_heuristic():
         print(f"  - Profit trouvé {total_profit}")
 
 
-def test_repair_heuristic():
-    import os
-
-    # Charger les instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
+def test_repair_heuristic(instance_name):
     # Lire les données
     try:
-        data = read_knapsack_data(test_file_path)
+        data = read_knapsack_data(instance_name)
     except Exception as e:
         print(f"Erreur lors de la lecture des données : {e}")
         return
@@ -130,17 +107,10 @@ def test_repair_heuristic():
         print(f"  - Profit trouvé: {total_profit}")
 
 
-def test_hill_climbing():
-    # Charger les instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
+def test_hill_climbing(instance_name):
     try:
         # Lire les données
-        data = read_knapsack_data(test_file_path)
+        data = read_knapsack_data(instance_name)
         
         print("Test de l'algorithme de montée de colline avec une solution initiale obtenue par greedy_heuristic:")
 
@@ -190,17 +160,10 @@ def test_hill_climbing():
         print(f"Une erreur est survenue lors de l'exécution de l'algorithme : {e}")
 
 
-def test_simulated_annealing_metaheuristic():
-    # Chemin vers le fichier d'instances
-    test_file_path = os.path.join("instances", "mknap1.txt")
-
-    if not os.path.exists(test_file_path):
-        print(f"Fichier de test non trouvé : {test_file_path}")
-        return
-
+def test_simulated_annealing_metaheuristic(instance_name):
     try:
         # Lire les données
-        instances = read_knapsack_data(test_file_path)
+        instances = read_knapsack_data(instance_name)
 
         print("Test de l'algorithme de recuit simulé sur les instances :")
 
@@ -244,15 +207,10 @@ def test_simulated_annealing_metaheuristic():
         print(f"Une erreur est survenue lors de l'exécution de l'algorithme : {e}")
 
 
-def compare_methods(instance_file):
-    # Vérifier si le fichier existe
-    if not os.path.exists(instance_file):
-        print(f"Fichier d'instance non trouvé : {instance_file}")
-        return
-
+def compare_methods(instance_name):
     try:
         # Lire les données
-        data = read_knapsack_data(instance_file)
+        data = read_knapsack_data(instance_name)
 
         print("Comparaison des méthodes sur les instances :")
 
@@ -333,4 +291,4 @@ def compare_methods(instance_file):
 
 
 if __name__ == "__main__":
-    compare_methods("instances/mknap1.txt")
+    test_read_knapsack_data("mknapcb1")
