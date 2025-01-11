@@ -218,7 +218,10 @@ def compare_methods(instance_name):
         output_file = os.path.join("results", f"{instance_name}.csv")
         results_columns = ["Instance", "Nombre de projets (N)", "Nombre de ressources (M)", "Profit optimal", "[Greedy] Profit",
                            "[Repair] Profit", "[Hill Climbing] Profit", "Écart [Greedy]", "Écart [Repair]", "Écart [Hill Climbing]"]
-        results_list = []  # Utiliser une liste pour collecter les résultats
+
+        # Initialiser le fichier CSV avec les colonnes si inexistant
+        if not os.path.exists(output_file):
+            pd.DataFrame(columns=results_columns).to_csv(output_file, index=False)
 
         # Comparer les méthodes pour chaque instance
         for i, instance in enumerate(data):
@@ -273,7 +276,7 @@ def compare_methods(instance_name):
                 print(f"  - Écart [Repair] : {abs(instance['optimal_value'] - repair_profit):.2f}")
                 print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
 
-            # Collecte des résultats
+            # Résultats de l'instance courante
             result = {
                 "Instance": i + 1,
                 "Nombre de projets (N)": instance['N'],
@@ -286,11 +289,9 @@ def compare_methods(instance_name):
                 "Écart [Repair]": abs(instance['optimal_value'] - repair_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                 "Écart [Hill Climbing]": abs(instance['optimal_value'] - hill_profit) / instance['optimal_value'] if instance['optimal_value'] else None
             }
-            results_list.append(result)
 
-        # Créer un DataFrame à partir des résultats
-        results_df = pd.DataFrame(results_list, columns=results_columns)
-        results_df.to_csv(output_file, index=False)
+            # Ajouter les résultats au fichier CSV immédiatement
+            pd.DataFrame([result]).to_csv(output_file, mode='a', header=False, index=False)
 
         print("\nComparaison terminée avec succès. Résultats enregistrés dans :", output_file)
 
@@ -299,4 +300,4 @@ def compare_methods(instance_name):
 
 
 if __name__ == "__main__":
-    compare_methods("mknap1")
+    compare_methods("mknapcb1")
