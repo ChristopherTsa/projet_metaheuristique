@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import pandas as pd
 
 
 def read_knapsack_data(instance_name):
