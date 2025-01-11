@@ -1,5 +1,5 @@
 import numpy as np
-from utils import calculate_profit, is_feasible
+from utilities import calculate_profit, is_feasible
 
 
 def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 

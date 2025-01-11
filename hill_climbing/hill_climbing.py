@@ -1,5 +1,5 @@
 import numpy as np
-from utils import calculate_profit, is_feasible
+from utilities import calculate_profit, is_feasible
 
 
 def hill_climbing(N, M, initial_solution, resource_consumption, resource_availabilities, profits, generate_neighbors):

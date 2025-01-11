@@ -1,5 +1,5 @@
 import numpy as np
-from utils import calculate_profit, is_feasible
+from utilities import calculate_profit, is_feasible
 
 
 def greedy_heuristic(N, M, profits, resource_consumption, resource_availabilities):
