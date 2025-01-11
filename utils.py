@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def read_knapsack_data(file_path):

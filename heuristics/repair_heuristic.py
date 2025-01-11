@@ -59,8 +59,8 @@ def repair_heuristic(N, M, resource_consumption, resource_availabilities, profit
         float: Total profit of the repaired solution.
     """
     # Generate the initial solution using surrogate relaxation
-    solution = surrogate_relaxation_solution(N, M, resource_consumption, resource_availabilities, profits)
-
+    #solution = surrogate_relaxation_solution(N, M, resource_consumption, resource_availabilities, profits)
+    solution = np.random.randint(2, size=N)
     # Check feasibility
     if is_feasible(solution, M, resource_consumption, resource_availabilities):
         total_profit = calculate_profit(solution, profits)
