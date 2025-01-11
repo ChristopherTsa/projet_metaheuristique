@@ -1,0 +1,64 @@
+TODO
+
+* Valider les heuristiques
+    > notamment le surrogate de la repair heuristics
+        - EDOUARD
+
+* Trouver un voisinage non trivial
+        - CHRIS
+
+* Hill climbing
+    > VNS ? VND?
+
+* Metaheuristique
+    > SA
+        > finetune les paramètres (temperature, mu, fonction de mu, max_iter/max_time, voisinage)
+        > ajouter des petites amélioration comme la repair heuristic pour les solution non faisables
+            - CHRIS
+    > GA
+            - EDOUARD
+    > hybrid SA/GA
+            - CHRIS
+
+* Instances
+    > 1-5
+        - CHRIS
+    > 6-9
+        - EDOUARD
+
+
+
+
+
+
+
+
+Autre :
+
+dans le rapport ecrire en pseudo code les algos
+
+repair = partir d'une solution random ou relaxation surrogate
+
+voisinage = trouver un voisinage pas dans le cours et pas simple
+
+bien calculer la temperature
+utiliser un critere d'arret de temps
+le choix de la temperature?
+peut on mieux faire que l'algo classique?
+
+
+vaut mieux arreter l'algo s'il ne s'ameliorer pas apres 10 mins
+et faire plus d'instances
+
+bien comprendre la méthode du recuit simulé car pas difficile a comprendre
+
+
+numba utils
+
+initial solution hill climbing
+autre hill climbing
+autre voisinage
+tune parameter simulated annealing
+critere arret temps
+
+
