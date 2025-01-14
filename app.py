@@ -182,9 +182,6 @@ def test_simulated_annealing_metaheuristic(instance_name):
             resource_consumption = np.array(instance['resource_consumption'], dtype=np.float64)
             resource_availabilities = np.array(instance['resource_availabilities'], dtype=np.float64)
 
-            # Générer une solution initiale faisable (exemple : aucune sélection)
-            initial_solution = np.zeros(instance['N'], dtype=np.int32)
-
             # Exécuter le recuit simulé
             final_solution, total_profit = simulated_annealing_metaheuristic(
                 instance['N'],
