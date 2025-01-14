@@ -83,8 +83,6 @@ def surrogate_relaxation_mkp(N, M, resource_consumption, resource_availabilities
     surrogate_weights = [sum(resource_consumption[i][j] * multipliers[i] for i in range(M)) for j in range(N)]
     surrogate_capacity = sum(multipliers[i] * resource_availabilities[i] for i in range(M))
     
-    # Solve surrogate knapsack problem (greedy approach)
-    item_indices = list(range(N))
     # Compute profit-to-weight ratio
     ratios = [(profits[j] / surrogate_weights[j], j) for j in range(N) if surrogate_weights[j] > 0]
     ratios.sort(reverse=True, key=lambda x: x[0])  # Sort by descending profit-to-weight ratio
