@@ -3,7 +3,7 @@ from utilities import calculate_profit, is_feasible
 
 
 def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 
-                                  generate_neighbors, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
+                                  generate_neighbors, initial_solution, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
     """
     Implements the Simulated Annealing metaheuristic for the multidimensional knapsack problem.
 
@@ -44,11 +44,8 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         mean_delta_f = np.mean(delta_fs) if delta_fs else 1
         return -mean_delta_f / np.log(0.8)  # Assuming initial acceptance probability of 0.8
 
-    # Generate initial solution
-    current_solution = np.random.randint(0, 2, N)
-    while not is_feasible(current_solution, M, resource_consumption, resource_availabilities):
-        current_solution = np.random.randint(0, 2, N)
-
+    # Utiliser la solution initiale fournie
+    current_solution = initial_solution.copy()
     current_profit = calculate_profit(current_solution, profits)
     best_solution = current_solution.copy()
     best_profit = current_profit
@@ -82,4 +79,18 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         temperature *= cooling_rate
         iteration += 1
 
+    return best_solution, best_profit
+
+
+def simulated_annealing_random_init_metaheuristic(N, M, resource_consumption, resource_availabilities, profits,
+                                  generate_neighbors, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
+    
+    # Generate initial solution
+    initial_solution = np.random.randint(0, 2, N)
+    while not is_feasible(initial_solution, M, resource_consumption, resource_availabilities):
+        initial_solution = np.random.randint(0, 2, N)
+    
+    best_solution, best_profit = simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits,
+                                                                   generate_neighbors, initial_solution, initial_temperature, cooling_rate, max_iterations, epsilon)
+    
     return best_solution, best_profit
