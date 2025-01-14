@@ -93,15 +93,18 @@ def resource_profit_based_1_pair_neighborhood(solution, profits, resource_consum
     return neighbors
 
 
-def resource_profit_based_k_pair_neighborhood(solution, profits, resource_consumption, k=1):
+from itertools import combinations
+
+def resource_profit_based_1k_pairs_neighborhood(solution, profits, resource_consumption, k=1):
     """
-    Generates a neighborhood by replacing k least efficient items in the solution with k most efficient excluded items.
+    Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
+    between the worst included items and the best excluded items.
 
     Args:
         solution (np.ndarray): Current solution vector (array of 0s and 1s).
         profits (np.ndarray): Array of profits for each item.
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
-        k (int): Number of pairs to replace.
+        k (int): Number of candidates to consider for replacements.
 
     Returns:
         list of np.ndarray: The list of neighbors.
@@ -121,19 +124,22 @@ def resource_profit_based_k_pair_neighborhood(solution, profits, resource_consum
     # Sort excluded items by descending ratio
     excluded_sorted = excluded_indices[np.argsort(-ratios[excluded_indices])]
 
-    # Generate all possible combinations of k pairs
-    included_combinations = list(combinations(included_sorted, k))
-    excluded_combinations = list(combinations(excluded_sorted, k))
+    # Limit to the top k candidates for both included and excluded
+    worst_included = included_sorted[:k]
+    best_excluded = excluded_sorted[:k]
 
-    # Generate neighbors by replacing k worst included items with k best excluded items
-    for included_set in included_combinations:
-        for excluded_set in excluded_combinations:
+    # Generate neighbors by modifying 1, 2, ..., k pairs
+    for m in range(1, k + 1):
+        included_combinations = list(combinations(worst_included, m))
+        excluded_combinations = list(combinations(best_excluded, m))
+
+        for inc_set, exc_set in zip(included_combinations, excluded_combinations):
             neighbor = solution.copy()
 
-            # Replace the selected included items with the selected excluded items
-            for included_idx, excluded_idx in zip(included_set, excluded_set):
-                neighbor[included_idx] = 0
-                neighbor[excluded_idx] = 1
+            # Apply modifications for m pairs
+            for inc_idx, exc_idx in zip(inc_set, exc_set):
+                neighbor[inc_idx] = 0  # Exclude the worst included item
+                neighbor[exc_idx] = 1  # Include the best excluded item
 
             neighbors.append(neighbor)
 
