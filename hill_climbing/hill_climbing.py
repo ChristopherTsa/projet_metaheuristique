@@ -25,7 +25,7 @@ def hill_climbing(N, M, initial_solution, resource_consumption, resource_availab
     current_profit = calculate_profit(current_solution, profits)
 
     while True:
-        neighbors = generate_neighbors(current_solution, profits, resource_consumption, 3)
+        neighbors = generate_neighbors(current_solution, profits, resource_consumption, 8)
         best_neighbor = current_solution
         best_profit = current_profit
 

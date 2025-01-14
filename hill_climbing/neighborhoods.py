@@ -51,7 +51,7 @@ def multi_opt_neighborhood(solution, profits, ressource_consumption, k=1):
     return neighbors
 
 
-def resource_profit_based_1_pair_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_neighborhood(solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing the least efficient items in the solution with the most efficient excluded items.
 
@@ -95,7 +95,7 @@ def resource_profit_based_1_pair_neighborhood(solution, profits, resource_consum
 
 from itertools import combinations
 
-def resource_profit_based_1k_pairs_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_k_neighborhood(solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
     between the worst included items and the best excluded items.
@@ -140,6 +140,48 @@ def resource_profit_based_1k_pairs_neighborhood(solution, profits, resource_cons
             for inc_idx, exc_idx in zip(inc_set, exc_set):
                 neighbor[inc_idx] = 0  # Exclude the worst included item
                 neighbor[exc_idx] = 1  # Include the best excluded item
+
+            neighbors.append(neighbor)
+
+    return neighbors
+
+
+def resource_profit_based_reverse_neighborhood(solution, profits, resource_consumption, k=1):
+    """
+    Generates a neighborhood by replacing the best included items with the worst excluded items.
+
+    Args:
+        solution (np.ndarray): Current solution vector (array of 0s and 1s).
+        profits (np.ndarray): Array of profits for each item.
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        k (int): Number of candidates to consider for replacements.
+
+    Returns:
+        list of np.ndarray: The list of neighbors.
+    """
+    neighbors = []
+
+    # Calculate profit/resource ratios
+    ratios = profits / (np.sum(resource_consumption, axis=0) + 1e-9)
+
+    # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
+    included_indices = np.where(solution == 1)[0]
+    excluded_indices = np.where(solution == 0)[0]
+
+    # Sort included items by descending ratio (best inclus)
+    included_sorted = included_indices[np.argsort(-ratios[included_indices])]
+
+    # Sort excluded items by ascending ratio (worst exclus)
+    excluded_sorted = excluded_indices[np.argsort(ratios[excluded_indices])]
+
+    # Generate neighbors by replacing k best included items with k worst excluded items
+    for i in range(min(k, len(included_sorted))):
+        for j in range(min(k, len(excluded_sorted))):
+            neighbor = solution.copy()
+
+            # Replace the best included item with the worst excluded item
+            neighbor[included_sorted[i]] = 0
+            neighbor[excluded_sorted[j]] = 1
 
             neighbors.append(neighbor)
 
