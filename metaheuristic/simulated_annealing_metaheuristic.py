@@ -1,9 +1,11 @@
 import numpy as np
+import time
+import random
 from utilities import calculate_profit, is_feasible
 
 
 def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 
-                                  generate_neighbors, initial_solution, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
+                                  generate_neighbors, initial_solution, max_time, iter_max, initial_temperature=None, cooling_rate=0.95, epsilon=1e-3):
     """
     Implements the Simulated Annealing metaheuristic for the multidimensional knapsack problem.
 
@@ -14,9 +16,10 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         resource_availabilities (np.ndarray): Available resources for each type.
         profits (np.ndarray): Array of profits for each project.
         generate_neighbors (function): Function to generate a neighbor solution.
+        max_time (float): Maximum runtime in seconds.
+        iter_max (int): Maximum number of iterations before cooling down the temperature.
         initial_temperature (float): Initial temperature for simulated annealing. If None, it is calculated dynamically.
         cooling_rate (float): Rate at which the temperature decreases.
-        max_iterations (int): Maximum number of iterations for the algorithm.
         epsilon (float): Minimum temperature threshold for stopping.
 
     Returns:
@@ -33,7 +36,7 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
             solution = np.random.randint(0, 2, N)
             if not is_feasible(solution, M, resource_consumption, resource_availabilities):
                 continue
-            neighbor = generate_neighbors(solution, 3)
+            neighbor = generate_neighbors(solution, profits, resource_consumption, 3)
             if not is_feasible(neighbor, M, resource_consumption, resource_availabilities):
                 continue
 
@@ -55,30 +58,49 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         temperature = initialize_temperature()
     else:
         temperature = initial_temperature
+    
+    start_time = time.time()
 
-    iteration = 0
+    while temperature > epsilon and time.time() - start_time < max_time:
+        
+        for i in range(iter_max):
+            # Generate a neighbor solution using the provided function
+            neighbors = generate_neighbors(current_solution, profits, resource_consumption, 3)
+            
+            # Filter neighbors to keep only feasible ones
+            feasible_neighbors = [
+                neighbor for neighbor in neighbors
+                if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
+            ]
 
-    while temperature > epsilon and iteration < max_iterations:
-        # Generate a neighbor solution using the provided function
-        neighbor = generate_neighbors(current_solution, 3)
-        if is_feasible(neighbor, M, resource_consumption, resource_availabilities):
+            # If no feasible neighbors exist, move to the next neighborhood
+            if not feasible_neighbors:
+                continue
+
+            # Choose a random feasible neighbor
+            neighbor = random.choice(feasible_neighbors)
             neighbor_profit = calculate_profit(neighbor, profits)
 
             # Decide whether to accept the neighbor
             profit_difference = neighbor_profit - current_profit
-            if profit_difference > 0 or np.random.random() < np.exp(profit_difference / temperature):
-                current_solution = neighbor
+            
+            if profit_difference >= 0:
+                current_solution = neighbor.copy()
                 current_profit = neighbor_profit
 
                 # Update the best solution found
                 if current_profit > best_profit:
                     best_solution = current_solution.copy()
                     best_profit = current_profit
-
+                    
+            else:
+                if np.random.random() < np.exp(profit_difference / temperature):
+                    current_solution = neighbor.copy()
+                    current_profit = neighbor_profit
+        
         # Cool down the temperature
         temperature *= cooling_rate
-        iteration += 1
-
+        
     return best_solution, best_profit
 
 
