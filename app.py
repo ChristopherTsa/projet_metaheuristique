@@ -9,9 +9,11 @@ from heuristics.repair_heuristic import repair_heuristic, surrogate_relaxation_m
 
 import hill_climbing.neighborhoods as neighborhoods
 from hill_climbing.hill_climbing import hill_climbing
+from hill_climbing.vns import vns_hill_climbing
 
 from metaheuristic.simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
 from metaheuristic.genetic_metaheuristic import genetic_metaheuristic
+from metaheuristic.sa_iga_metaheuristic import sa_iga_metaheuristic
 
 
 def test_read_knapsack_data(instance_name):
@@ -148,7 +150,7 @@ def test_hill_climbing(instance_name):
                 resource_consumption,
                 resource_availabilities,
                 profits,
-                neighborhoods.multi_opt_neighborhood
+                neighborhoods.resource_profit_based_1_pair_neighborhood
             )
 
             # Afficher les résultats
@@ -216,8 +218,9 @@ def compare_methods(instance_name):
 
         output_file = os.path.join("results", f"{instance_name}.csv")
         results_columns = ["Instance", "Nombre de projets (N)", "Nombre de ressources (M)", "Profit optimal", "[Greedy] Profit",
-                           "[Repair] Profit", "[Hill Climbing] Profit",  "[Genetic] Profit", "Écart [Greedy]", "Écart [Repair]", "Écart [Hill Climbing]",
-                           "Écart [Genetic]", "Temps [Greedy]", "Temps [Repair]", "Temps [Hill Climbing]", "Temps [Genetic]"]
+                           "[Repair] Profit", "[Hill Climbing] Profit", "[Genetic] Profit", "[SA IGA] Profit",
+                           "Écart [Greedy]", "Écart [Repair]", "Écart [Hill Climbing]", "Écart [Genetic]", "Écart [SA IGA]",
+                           "Temps [Greedy]", "Temps [Repair]", "Temps [Hill Climbing]", "Temps [Genetic]", "Temps [SA IGA]"]
 
         # Initialiser le fichier CSV avec les colonnes si inexistant
         if not os.path.exists(output_file):
@@ -225,7 +228,7 @@ def compare_methods(instance_name):
 
         # Comparer les méthodes pour chaque instance
         for i, instance in enumerate(data):
-            if i < 5:
+            if i < 8:
                 print(f"\nInstance {i + 1} :")
                 print(f"  - Nombre de projets (N) : {instance['N']}")
                 print(f"  - Nombre de ressources (M) : {instance['M']}")
@@ -263,7 +266,7 @@ def compare_methods(instance_name):
                 end_time_repair = time.time()
                 repair_time = end_time_repair - start_time_repair
                 print(f"  - [Repair] Profit : {repair_profit:.2f}")
-                """
+
                 # 3. Hill climbing
                 start_time_hill_climbing = time.time()
                 hill_solution, hill_profit = hill_climbing(
@@ -273,35 +276,65 @@ def compare_methods(instance_name):
                     resource_consumption,
                     resource_availabilities,
                     profits,
-                    neighborhoods.multi_opt_neighborhood
+                    neighborhoods.multi_opt_neighborhood,
+                    3
                 )
                 end_time_hill_climbing = time.time()
                 hill_climbing_time = end_time_hill_climbing - start_time_hill_climbing
                 print(f"  - [Hill Climbing] Profit : {hill_profit:.2f}")
-                """
-                hill_profit = 0
-                hill_climbing_time = 0
-                # 4. genetic algorithm
                 
-                start_time_genetic = time.time()
-                genetic_solution, genetic_profit = genetic_metaheuristic(
+                # 4. VNS + Hill climbing
+                start_time_vns = time.time()
+                vns_solution, vns_profit = vns_hill_climbing(
                     instance['N'],
                     instance['M'],
+                    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     resource_consumption,
                     resource_availabilities,
-                    profits
+                    profits,
+                    neighborhoods.multi_opt_neighborhood,
+                    60,
+                    3
                 )
-                
-                end_time_genetic = time.time()
-                genetic_time = end_time_genetic - start_time_genetic
-                
-                #genetic_time = 0
-                #genetic_profit = 0
+                end_time_vns = time.time()
+                vns_time = end_time_vns - start_time_vns
+                print(f"  - [VNS + Hill Climbing] Profit : {vns_profit:.2f}")
+
+                # 4. Genetic algorithm
+                #start_time_genetic = time.time()
+                #genetic_solution, genetic_profit = genetic_metaheuristic(
+                #    instance['N'],
+                #    instance['M'],
+                #    resource_consumption,
+                #    resource_availabilities,
+                #    profits
+                #)
+                #end_time_genetic = time.time()
+                #genetic_time = end_time_genetic - start_time_genetic
+                #print(f"  - [Genetic] Profit : {genetic_profit:.2f}")
+
+                # 5. SA IGA
+                #start_time_sa_iga = time.time()
+                #sa_iga_solution, sa_iga_profit = sa_iga_metaheuristic(
+                #    instance['N'],
+                #    instance['M'],
+                #    resource_consumption,
+                #    resource_availabilities,
+                #    profits,
+                #    neighborhoods.multi_opt_neighborhood
+                #)
+                #end_time_sa_iga = time.time()
+                #sa_iga_time = end_time_sa_iga - start_time_sa_iga
+                #print(f"  - [SA IGA] Profit : {sa_iga_profit:.2f}")
+
                 # Comparaison avec la valeur optimale si disponible
                 if instance['optimal_value'] is not None:
                     print(f"  - Écart [Greedy] : {abs(instance['optimal_value'] - greedy_profit):.2f}")
                     print(f"  - Écart [Repair] : {abs(instance['optimal_value'] - repair_profit):.2f}")
-                    #print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
+                    print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
+                    print(f"  - Écart [VNS + Hill Climbing] : {abs(instance['optimal_value'] - vns_profit):.2f}")
+                #    print(f"  - Écart [Genetic] : {abs(instance['optimal_value'] - genetic_profit):.2f}")
+                #    print(f"  - Écart [SA IGA] : {abs(instance['optimal_value'] - sa_iga_profit):.2f}")
 
                 # Résultats de l'instance courante
                 result = {
@@ -312,15 +345,21 @@ def compare_methods(instance_name):
                     "[Greedy] Profit": greedy_profit,
                     "[Repair] Profit": repair_profit,
                     "[Hill Climbing] Profit": hill_profit,
-                    "[Genetic] Profit": genetic_profit,
+                    "[VNS + Hill Climbing] Profit": vns_profit,
+                #    "[Genetic] Profit": genetic_profit,
+                #    "[SA IGA] Profit": sa_iga_profit,
                     "Écart [Greedy]": abs(instance['optimal_value'] - greedy_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Repair]": abs(instance['optimal_value'] - repair_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Hill Climbing]": abs(instance['optimal_value'] - hill_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
-                    "Écart [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    "Écart [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                #    "Écart [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                #    "Écart [SA IGA]": abs(instance['optimal_value'] - sa_iga_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Temps [Greedy]": greedy_time,
                     "Temps [Repair]": repair_time,
                     "Temps [Hill Climbing]": hill_climbing_time,
-                    "Temps [Genetic]": genetic_time
+                    "Temps [VNS + Hill Climbing]": vns_time,
+                #    "Temps [Genetic]": genetic_time,
+                #    "Temps [SA IGA]": sa_iga_time
                 }
 
                 # Ajouter les résultats au fichier CSV immédiatement
@@ -333,4 +372,4 @@ def compare_methods(instance_name):
 
 
 if __name__ == "__main__":
-    compare_methods("mknapcb8")
+    compare_methods("mknapcb1")

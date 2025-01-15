@@ -2,7 +2,7 @@ import numpy as np
 from utilities import calculate_profit, is_feasible
 
 
-def hill_climbing(N, M, initial_solution, resource_consumption, resource_availabilities, profits, generate_neighbors):
+def hill_climbing(N, M, initial_solution, resource_consumption, resource_availabilities, profits, generate_neighbors, k):
     """
     Implements the hill climbing algorithm for the multidimensional knapsack problem.
     Optimized with Numba.
@@ -25,7 +25,7 @@ def hill_climbing(N, M, initial_solution, resource_consumption, resource_availab
     current_profit = calculate_profit(current_solution, profits)
 
     while True:
-        neighbors = generate_neighbors(current_solution, profits, resource_consumption, 8)
+        neighbors = generate_neighbors(current_solution, profits, resource_consumption, k)
         best_neighbor = current_solution
         best_profit = current_profit
 
