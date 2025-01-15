@@ -15,6 +15,7 @@ def hill_climbing(N, M, initial_solution, resource_consumption, resource_availab
         resource_availabilities (np.ndarray): Array of available resources for each resource type.
         profits (np.ndarray): Array of profits for each project.
         generate_neighbors (function): A function to generate neighbors of the current solution.
+        k (int): Degree of neighborhood.
 
     Returns:
         np.ndarray: Final solution vector (array of 0s and 1s).

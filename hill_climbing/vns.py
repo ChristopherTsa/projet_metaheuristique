@@ -20,7 +20,7 @@ def vns_hill_climbing(
         profits (np.ndarray): Array of profits for each project.
         generate_neighbors_list (list of functions): List of neighborhood generation functions.
         max_time (float): Maximum runtime in seconds.
-        k_max (int): Maximum number of neighborhoods to explore.
+        k_max (int): Maximum degree of neighborhood to explore.
 
     Returns:
         np.ndarray: Final solution vector (array of 0s and 1s).
