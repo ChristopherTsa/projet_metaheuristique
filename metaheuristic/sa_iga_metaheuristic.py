@@ -2,12 +2,12 @@ import random
 from deap import base, creator, tools
 import numpy as np
 from utilities import calculate_profit, is_feasible
-from simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
+from metaheuristic.simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
 
 
-def sa_iga_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, generate_neighbors, 
-                         initial_temperature=None, cooling_rate=0.95, max_iterations_sa=100, epsilon=1e-3, 
-                         population_size=400, ngen=200, cxpb=0.7, mutpb=0.3):
+def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, profits, generate_neighbors, 
+                         initial_temperature=None, cooling_rate=0.75, max_iterations_sa=10, epsilon=1e-3, 
+                         population_size=100, ngen=20, cxpb=0.7, mutpb=0.3):
     """
     Combines Simulated Annealing (SA) and Genetic Algorithm (GA) to solve the 0/1 MKP.
 
@@ -34,6 +34,11 @@ def sa_iga_metaheuristic(N, M, resource_consumption, resource_availabilities, pr
     random.seed(42)  # For reproducibility
 
     # Create DEAP classes
+    if "Fitness" in creator.__dict__:
+        del creator.Fitness
+
+    if "Individual" in creator.__dict__:
+        del creator.Individual
     creator.create("Fitness", base.Fitness, weights=(1.0,))  # Maximization
     creator.create("Individual", list, fitness=creator.Fitness)
 
@@ -70,6 +75,7 @@ def sa_iga_metaheuristic(N, M, resource_consumption, resource_availabilities, pr
 
     # Genetic Algorithm loop
     for gen in range(ngen):
+        print(gen)
         # Evaluate individuals
         for ind in pop:
             ind.fitness.values = toolbox.evaluate(ind)
