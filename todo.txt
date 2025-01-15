@@ -2,10 +2,10 @@ TODO
 
 * Valider les heuristiques
     > notamment le surrogate de la repair heuristics
-        - EDOUARD
+        - EDOUARD OK
 
 * Trouver un voisinage non trivial
-        - CHRIS
+        - CHRIS OK
 
 * Hill climbing
     > VNS ? VND?
