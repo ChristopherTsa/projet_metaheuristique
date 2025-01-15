@@ -10,11 +10,15 @@ import numpy as np
 
 # Algorithme principal
 def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, profits):
-    random.seed(42)  # Pour la reproductibilité
-
-    
+    # Pour la reproductibilité
+    random.seed(42)
 
     # Création de la classe Fitness et Individu
+    if "Fitness" in creator.__dict__:
+        del creator.Fitness
+
+    if "Individual" in creator.__dict__:
+        del creator.Individual
     creator.create("Fitness", base.Fitness, weights=(1.0,))  # Maximisation
     creator.create("Individual", list, fitness=creator.Fitness)
 
