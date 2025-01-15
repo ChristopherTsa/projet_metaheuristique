@@ -5,7 +5,7 @@ from utilities import calculate_profit, is_feasible
 
 
 def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 
-                                  generate_neighbors, initial_solution, max_time, iter_max, initial_temperature=None, cooling_rate=0.95, epsilon=1e-3):
+                                  generate_neighbors, initial_solution, max_time, iter_max, initial_temperature=None, cooling_rate=0.95, epsilon=1e-3, k=3):
     """
     Implements the Simulated Annealing metaheuristic for the multidimensional knapsack problem.
 
@@ -21,6 +21,7 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         initial_temperature (float): Initial temperature for simulated annealing. If None, it is calculated dynamically.
         cooling_rate (float): Rate at which the temperature decreases.
         epsilon (float): Minimum temperature threshold for stopping.
+        k (int): Degree of neighborhood.
 
     Returns:
         np.ndarray: Final solution vector (array of 0s and 1s).
@@ -65,7 +66,7 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         
         for i in range(iter_max):
             # Generate a neighbor solution using the provided function
-            neighbors = generate_neighbors(current_solution, profits, resource_consumption, 3)
+            neighbors = generate_neighbors(current_solution, profits, resource_consumption, k)
             
             # Filter neighbors to keep only feasible ones
             feasible_neighbors = [

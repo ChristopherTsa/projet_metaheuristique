@@ -284,23 +284,44 @@ def compare_methods(instance_name):
                 print(f"  - [Hill Climbing] Profit : {hill_profit:.2f}")
                 
                 # 4. VNS + Hill climbing
-                start_time_vns = time.time()
-                vns_solution, vns_profit = vns_hill_climbing(
+                #start_time_vns = time.time()
+                #vns_solution, vns_profit = vns_hill_climbing(
+                #    instance['N'],
+                #    instance['M'],
+                #    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
+                #    resource_consumption,
+                #    resource_availabilities,
+                #    profits,
+                #    neighborhoods.multi_opt_neighborhood,
+                #    60,
+                #    3
+                #)
+                #end_time_vns = time.time()
+                #vns_time = end_time_vns - start_time_vns
+                #print(f"  - [VNS + Hill Climbing] Profit : {vns_profit:.2f}")
+                
+                # 5. SA
+                start_time_sa = time.time()
+                sa_solution, sa_profit = simulated_annealing_metaheuristic(
                     instance['N'],
                     instance['M'],
-                    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     resource_consumption,
                     resource_availabilities,
                     profits,
                     neighborhoods.multi_opt_neighborhood,
+                    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     60,
+                    100,
+                    None,
+                    0.85,
+                    1e-3,
                     3
                 )
-                end_time_vns = time.time()
-                vns_time = end_time_vns - start_time_vns
-                print(f"  - [VNS + Hill Climbing] Profit : {vns_profit:.2f}")
+                end_time_sa = time.time()
+                sa_time = end_time_sa - start_time_sa
+                print(f"  - [SA] Profit : {sa_profit:.2f}")
 
-                # 4. Genetic algorithm
+                # 6. Genetic algorithm
                 #start_time_genetic = time.time()
                 #genetic_solution, genetic_profit = genetic_metaheuristic(
                 #    instance['N'],
@@ -313,7 +334,7 @@ def compare_methods(instance_name):
                 #genetic_time = end_time_genetic - start_time_genetic
                 #print(f"  - [Genetic] Profit : {genetic_profit:.2f}")
 
-                # 5. SA IGA
+                # 7. SA IGA
                 #start_time_sa_iga = time.time()
                 #sa_iga_solution, sa_iga_profit = sa_iga_metaheuristic(
                 #    instance['N'],
@@ -332,7 +353,8 @@ def compare_methods(instance_name):
                     print(f"  - Écart [Greedy] : {abs(instance['optimal_value'] - greedy_profit):.2f}")
                     print(f"  - Écart [Repair] : {abs(instance['optimal_value'] - repair_profit):.2f}")
                     print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
-                    print(f"  - Écart [VNS + Hill Climbing] : {abs(instance['optimal_value'] - vns_profit):.2f}")
+                    #print(f"  - Écart [VNS + Hill Climbing] : {abs(instance['optimal_value'] - vns_profit):.2f}")
+                    print(f"  - Écart [SA] : {abs(instance['optimal_value'] - sa_profit):.2f}")
                 #    print(f"  - Écart [Genetic] : {abs(instance['optimal_value'] - genetic_profit):.2f}")
                 #    print(f"  - Écart [SA IGA] : {abs(instance['optimal_value'] - sa_iga_profit):.2f}")
 
@@ -345,19 +367,22 @@ def compare_methods(instance_name):
                     "[Greedy] Profit": greedy_profit,
                     "[Repair] Profit": repair_profit,
                     "[Hill Climbing] Profit": hill_profit,
-                    "[VNS + Hill Climbing] Profit": vns_profit,
+                    #"[VNS + Hill Climbing] Profit": vns_profit,
+                    "[SA] Profit": sa_profit,
                 #    "[Genetic] Profit": genetic_profit,
                 #    "[SA IGA] Profit": sa_iga_profit,
                     "Écart [Greedy]": abs(instance['optimal_value'] - greedy_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Repair]": abs(instance['optimal_value'] - repair_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Hill Climbing]": abs(instance['optimal_value'] - hill_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
-                    "Écart [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    #"Écart [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    "Écart [SA]": abs(instance['optimal_value'] - sa_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                 #    "Écart [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                 #    "Écart [SA IGA]": abs(instance['optimal_value'] - sa_iga_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Temps [Greedy]": greedy_time,
                     "Temps [Repair]": repair_time,
                     "Temps [Hill Climbing]": hill_climbing_time,
-                    "Temps [VNS + Hill Climbing]": vns_time,
+                    #"Temps [VNS + Hill Climbing]": vns_time,
+                    "Temps [SA]": sa_time,
                 #    "Temps [Genetic]": genetic_time,
                 #    "Temps [SA IGA]": sa_iga_time
                 }
@@ -372,4 +397,4 @@ def compare_methods(instance_name):
 
 
 if __name__ == "__main__":
-    compare_methods("mknapcb1")
+    compare_methods("mknap1")
