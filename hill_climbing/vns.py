@@ -1,11 +1,11 @@
-import random
 import time
+import numpy as np
 from utilities import calculate_profit, is_feasible
 from hill_climbing.hill_climbing import hill_climbing
 
 
 def vns_hill_climbing(
-    N, M, initial_solution, resource_consumption, resource_availabilities, profits, 
+    N, initial_solution, resource_consumption, resource_availabilities, profits, 
     generate_neighbors, max_time, k_max
 ):
     """
@@ -31,31 +31,32 @@ def vns_hill_climbing(
     # Initialize the current solution and profit
     current_solution = initial_solution.copy()
     current_profit = calculate_profit(current_solution, profits)
-
+    
     while time.time() - start_time < max_time:
         k = 1  # Start with the first neighborhood
 
         while k <= k_max:
-            # Generate a random neighbor in the k-th neighborhood
-            neighbors = generate_neighbors(current_solution, profits, resource_consumption, k)
             
-            # Filter neighbors to keep only feasible ones
-            feasible_neighbors = [
-                neighbor for neighbor in neighbors
-                if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
-            ]
-
-            # If no feasible neighbors exist, move to the next neighborhood
-            if not feasible_neighbors:
+            # Générer les indices des bits modifiés sous forme de matrice NumPy
+            neighbors_indices = generate_neighbors(N, k)
+            if neighbors_indices.size == 0:  # Aucun voisin
                 k += 1
                 continue
+            
+            # Générer un voisin aléatoire
+            random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
+            random_neighbor = current_solution.copy()
+            random_neighbor[random_indices] ^= 1 # Inverser les bits directement avec XOR
 
-            # Choose a random feasible neighbor
-            random_neighbor = random.choice(feasible_neighbors)
+            # Check if the generated neighbor is feasible
+            while not is_feasible(random_neighbor, resource_consumption, resource_availabilities):
+                random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
+                random_neighbor = current_solution.copy()
+                random_neighbor[random_indices] ^= 1 # Inverser les bits directement avec XOR
 
             # Apply the Hill Climbing heuristic on the feasible random neighbor
             local_solution, local_profit = hill_climbing(
-                N, M, random_neighbor, resource_consumption, resource_availabilities, profits, 
+                N, random_neighbor, resource_consumption, resource_availabilities, profits, 
                 generate_neighbors, k)
             
             # Update the best solution if local search improves it
