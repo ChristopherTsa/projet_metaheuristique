@@ -88,7 +88,7 @@ def resource_profit_based_neighborhood(N, solution, profits, resource_consumptio
     return neighborhood_indices
 
 
-def resource_profit_based_k_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_k_neighborhood(N, solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
     between the worst included items and the best excluded items, without using an explicit loop.
@@ -134,7 +134,7 @@ def resource_profit_based_k_neighborhood(solution, profits, resource_consumption
     return neighborhood_indices
 
 
-def resource_profit_based_reverse_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_reverse_neighborhood(N, solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing the best included items with the worst excluded items.
     Returns an array where each element contains the indices of items to exclude and include.
@@ -176,7 +176,7 @@ def resource_profit_based_reverse_neighborhood(solution, profits, resource_consu
     return neighborhood_indices
 
 
-def resource_profit_based_reverse_k_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_reverse_k_neighborhood(N, solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
     between the best included items and the worst excluded items.
