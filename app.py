@@ -228,7 +228,7 @@ def compare_methods(instance_name):
 
         # Comparer les méthodes pour chaque instance
         for i, instance in enumerate(data):
-            if i < 8:
+            if i < 10:
                 print(f"\nInstance {i + 1} :")
                 print(f"  - Nombre de projets (N) : {instance['N']}")
                 print(f"  - Nombre de ressources (M) : {instance['M']}")
@@ -311,10 +311,10 @@ def compare_methods(instance_name):
                     neighborhoods.multi_opt_neighborhood,
                     greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     60,
-                    100,
+                    50,
                     None,
-                    0.85,
-                    1e-3,
+                    0.9,
+                    1e-5,
                     3
                 )
                 end_time_sa = time.time()

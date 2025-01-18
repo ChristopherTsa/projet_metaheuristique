@@ -28,18 +28,23 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         float: Total profit of the final solution.
     """
 
-    def initialize_temperature():
+    def initialize_temperature(solution):
         """
-        Dynamically calculate the initial temperature using Method 2 (Kirkpatrick).
+        Dynamically calculate the initial temperature using Method 2
         """
+        neighbors = generate_neighbors(solution, profits, resource_consumption, k)
+        # Filter neighbors to keep only feasible ones
+        feasible_neighbors = [
+            neighbor for neighbor in neighbors
+            if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
+        ]
+        if not feasible_neighbors:
+                return 1000
+        
         delta_fs = []
-        for _ in range(100):  # Test a number of transformations
-            solution = np.random.randint(0, 2, N)
-            if not is_feasible(solution, M, resource_consumption, resource_availabilities):
-                continue
-            neighbor = generate_neighbors(solution, profits, resource_consumption, 3)
-            if not is_feasible(neighbor, M, resource_consumption, resource_availabilities):
-                continue
+        for _ in range(20):  # Test a number of transformations
+            
+            neighbor = random.choice(feasible_neighbors)
 
             delta_f = calculate_profit(neighbor, profits) - calculate_profit(solution, profits)
             if delta_f > 0:
@@ -56,15 +61,16 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
 
     # Initialize temperature
     if initial_temperature is None:
-        temperature = initialize_temperature()
+        temperature = initialize_temperature(current_solution)
     else:
         temperature = initial_temperature
     
     start_time = time.time()
 
     while temperature > epsilon and time.time() - start_time < max_time:
+        print(temperature)
         
-        for i in range(iter_max):
+        for _ in range(iter_max):
             # Generate a neighbor solution using the provided function
             neighbors = generate_neighbors(current_solution, profits, resource_consumption, k)
             
@@ -74,8 +80,10 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
                 if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
             ]
 
-            # If no feasible neighbors exist, move to the next neighborhood
+            # If no feasible neighbors exist, move to the next iteration
             if not feasible_neighbors:
+                current_solution = best_solution.copy()
+                current_profit = best_profit
                 continue
 
             # Choose a random feasible neighbor
@@ -102,18 +110,4 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
         # Cool down the temperature
         temperature *= cooling_rate
         
-    return best_solution, best_profit
-
-
-def simulated_annealing_random_init_metaheuristic(N, M, resource_consumption, resource_availabilities, profits,
-                                  generate_neighbors, initial_temperature=None, cooling_rate=0.95, max_iterations=1000, epsilon=1e-3):
-    
-    # Generate initial solution
-    initial_solution = np.random.randint(0, 2, N)
-    while not is_feasible(initial_solution, M, resource_consumption, resource_availabilities):
-        initial_solution = np.random.randint(0, 2, N)
-    
-    best_solution, best_profit = simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits,
-                                                                   generate_neighbors, initial_solution, initial_temperature, cooling_rate, max_iterations, epsilon)
-    
     return best_solution, best_profit
