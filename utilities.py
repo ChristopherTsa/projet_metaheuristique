@@ -109,12 +109,10 @@ def read_knapsack_data(instance_name):
 
 def calculate_profit(solution, profits):
     """Calculate the total profit of a solution."""
-    return np.sum(profits * solution)
+    return np.dot(profits, solution)
 
 
-def is_feasible(solution, M, resource_consumption, resource_availabilities):
+def is_feasible(solution, resource_consumption, resource_availabilities):
     """Check if a solution is feasible."""
-    for i in range(M):
-        if np.sum(resource_consumption[i, :] * solution) > resource_availabilities[i]:
-            return False
-    return True
+    resource_usage = np.dot(resource_consumption, solution)
+    return np.all(resource_usage <= resource_availabilities)
