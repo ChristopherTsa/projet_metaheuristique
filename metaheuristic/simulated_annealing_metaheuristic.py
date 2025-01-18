@@ -1,6 +1,5 @@
 import numpy as np
 import time
-import random
 from utilities import calculate_profit, is_feasible
 
 
@@ -39,7 +38,6 @@ def simulated_annealing_metaheuristic(
         Returns:
             float: Initial temperature based on average profit differences.
         """
-        solution_profit = calculate_profit(initial_solution, profits)
         neighbors_indices = generate_neighbors(N, initial_solution, profits, resource_consumption, k)
         
         if neighbors_indices.size == 0:  # No neighbors available
