@@ -38,7 +38,7 @@ def vns_hill_climbing(
         while k <= k_max:
             
             # Générer les indices des bits modifiés sous forme de matrice NumPy
-            neighbors_indices = generate_neighbors(N, k)
+            neighbors_indices = generate_neighbors(N, current_solution, profits, resource_consumption, k)
             if neighbors_indices.size == 0:  # Aucun voisin
                 k += 1
                 continue

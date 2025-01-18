@@ -13,7 +13,7 @@ def hill_climbing(N, initial_solution, resource_consumption, resource_availabili
 
     while True:
         # Générer les indices des bits modifiés sous forme de matrice NumPy
-        neighbors_indices = generate_neighbors(N, k)
+        neighbors_indices = generate_neighbors(N, current_solution, profits, resource_consumption, k)
         if neighbors_indices.size == 0:  # Aucun voisin
             break
 

@@ -1,73 +1,64 @@
 import numpy as np
-from itertools import combinations
-from utilities import is_feasible
+from itertools import chain, combinations
 
 
-def multi_swap_neighborhood(solution, profits, ressource_consumption, k=1):
+def multi_swap_neighborhood_indices(N, solution, profits, resource_consumption, k=1):
     """
-    Generates the k-swap neighborhood by swapping k pairs of bits.
+    Génère les paires d'indices à échanger pour un voisinage k-swap sous forme de tableau NumPy.
 
     Args:
-        solution (np.ndarray): The current solution vector (array of 0s and 1s).
-        k (int): The number of swaps to perform simultaneously.
+        N (int): Taille de la solution.
+        k (int): Nombre de swaps à effectuer simultanément.
 
     Returns:
-        list of np.ndarray: The list of neighbors.
+        np.ndarray: Matrice où chaque ligne contient les indices à échanger sous forme de paires.
     """
-    N = len(solution)
-    neighbors = []
     indices = np.arange(N)
+    combs = list(combinations(indices, 2 * k))  # Générer toutes les combinaisons de 2*k éléments
+    swap_indices = []
 
-    for comb in combinations(indices, 2 * k):  # Generate combinations of 2*k elements
-        neighbor = solution.copy()
-        pairs = list(zip(comb[:k], comb[k:2 * k]))  # Form pairs of indices to swap
-        for i, j in pairs:
-            neighbor[i], neighbor[j] = neighbor[j], neighbor[i]  # Swap bits
-        neighbors.append(neighbor)
+    for comb in combs:
+        pairs = list(zip(comb[:k], comb[k:2 * k]))  # Former les paires à partir des combinaisons
+        swap_indices.append(pairs)
 
-    return neighbors
+    # Convertir en tableau NumPy avec une structure standardisée
+    return np.array(swap_indices, dtype=np.int32)
 
 
-def multi_opt_neighborhood(solution, profits, ressource_consumption, k=1):
+def multi_opt_neighborhood(N, solution, profits, resource_consumption, k=1):
     """
-    Generates the k-opt neighborhood by flipping k bits simultaneously.
+    Génère les indices des bits modifiés sous forme de tableau NumPy.
 
     Args:
-        solution (np.ndarray): The current solution vector (array of 0s and 1s).
-        k (int): The number of bits to flip (k-opt).
+        solution (np.ndarray): Solution courante.
+        k (int): Nombre de bits à inverser.
 
     Returns:
-        list of np.ndarray: The list of neighbors.
+        np.ndarray: Matrice où chaque ligne contient les indices modifiés.
     """
-    N = len(solution)
-    neighbors = []
-
-    for comb in combinations(range(N), k):  # Generate combinations of k elements
-        neighbor = solution.copy()
-        for idx in comb:
-            neighbor[idx] = 1 - neighbor[idx]  # Flip each selected bit
-        neighbors.append(neighbor)
-
-    return neighbors
+    combs = list(combinations(range(N), k))  # Générer les combinaisons
+    return np.array(combs, dtype=np.int32)  # Convertir en tableau NumPy
 
 
-def resource_profit_based_neighborhood(solution, profits, resource_consumption, k=1):
+def resource_profit_based_neighborhood(N, solution, profits, resource_consumption, k=1):
     """
-    Generates a neighborhood by replacing the least efficient items in the solution with the most efficient excluded items.
+    Generates a neighborhood by replacing the least efficient items in the solution 
+    with the most efficient excluded items.
+    Returns an array where each element is an array of indices to change.
 
     Args:
+        N (int): Total number of items.
         solution (np.ndarray): Current solution vector (array of 0s and 1s).
         profits (np.ndarray): Array of profits for each item.
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
         k (int): Number of items to replace.
 
     Returns:
-        list of np.ndarray: The list of neighbors.
+        np.ndarray: A 2D array where each row contains the indices to change.
     """
-    neighbors = []
-
-    # Calculate profit/resource ratios
-    ratios = profits / (np.sum(resource_consumption, axis=0) + 1e-9)
+    # Calculate profit/resource ratios using np.divide
+    total_resources = np.sum(resource_consumption, axis=0)
+    ratios = np.divide(profits, total_resources, where=total_resources > 0, out=np.full(profits.shape, np.inf))
 
     # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
     included_indices = np.where(solution == 1)[0]
@@ -79,26 +70,28 @@ def resource_profit_based_neighborhood(solution, profits, resource_consumption, 
     # Sort excluded items by descending ratio
     excluded_sorted = excluded_indices[np.argsort(-ratios[excluded_indices])]
 
-    # Generate neighbors by replacing k worst included items with k best excluded items
-    for i in range(min(k, len(included_sorted))):
-        for j in range(min(k, len(excluded_sorted))):
-            neighbor = solution.copy()
+    # Limit to k items for replacements
+    included_to_consider = included_sorted[:min(k, len(included_sorted))]
+    excluded_to_consider = excluded_sorted[:min(k, len(excluded_sorted))]
 
-            # Replace the worst included item with the best excluded item
-            neighbor[included_sorted[i]] = 0
-            neighbor[excluded_sorted[j]] = 1
+    # Generate all combinations of replacements
+    included_combinations = np.array(list(combinations(included_to_consider, k)))
+    excluded_combinations = np.array(list(combinations(excluded_to_consider, k)))
 
-            neighbors.append(neighbor)
+    # Use broadcasting to create all pairs of included and excluded combinations
+    included_expanded = np.repeat(included_combinations, len(excluded_combinations), axis=0)
+    excluded_expanded = np.tile(excluded_combinations, (len(included_combinations), 1))
 
-    return neighbors
+    # Stack results into a single array
+    neighborhood_indices = np.hstack((included_expanded, excluded_expanded))
 
+    return neighborhood_indices
 
-from itertools import combinations
 
 def resource_profit_based_k_neighborhood(solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
-    between the worst included items and the best excluded items.
+    between the worst included items and the best excluded items, without using an explicit loop.
 
     Args:
         solution (np.ndarray): Current solution vector (array of 0s and 1s).
@@ -107,12 +100,11 @@ def resource_profit_based_k_neighborhood(solution, profits, resource_consumption
         k (int): Number of candidates to consider for replacements.
 
     Returns:
-        list of np.ndarray: The list of neighbors.
+        np.ndarray: A 2D array where each row contains indices of items to exclude and include.
     """
-    neighbors = []
-
-    # Calculate profit/resource ratios
-    ratios = profits / (np.sum(resource_consumption, axis=0) + 1e-9)
+    # Calculate profit/resource ratios using np.divide
+    total_resources = np.sum(resource_consumption, axis=0)
+    ratios = np.divide(profits, total_resources, where=total_resources > 0, out=np.full(profits.shape, np.inf))
 
     # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
     included_indices = np.where(solution == 1)[0]
@@ -128,27 +120,24 @@ def resource_profit_based_k_neighborhood(solution, profits, resource_consumption
     worst_included = included_sorted[:k]
     best_excluded = excluded_sorted[:k]
 
-    # Generate neighbors by modifying 1, 2, ..., k pairs
-    for m in range(1, k + 1):
-        included_combinations = list(combinations(worst_included, m))
-        excluded_combinations = list(combinations(best_excluded, m))
+    # Generate all combinations for 1 to k
+    included_combinations = np.array(list(chain.from_iterable(combinations(worst_included, m) for m in range(1, k + 1))))
+    excluded_combinations = np.array(list(chain.from_iterable(combinations(best_excluded, m) for m in range(1, k + 1))))
 
-        for inc_set, exc_set in zip(included_combinations, excluded_combinations):
-            neighbor = solution.copy()
+    # Use broadcasting to create all possible pairs
+    included_expanded = np.repeat(included_combinations, len(excluded_combinations), axis=0)
+    excluded_expanded = np.tile(excluded_combinations, (len(included_combinations), 1))
 
-            # Apply modifications for m pairs
-            for inc_idx, exc_idx in zip(inc_set, exc_set):
-                neighbor[inc_idx] = 0  # Exclude the worst included item
-                neighbor[exc_idx] = 1  # Include the best excluded item
+    # Stack results into a single array
+    neighborhood_indices = np.hstack((included_expanded, excluded_expanded))
 
-            neighbors.append(neighbor)
-
-    return neighbors
+    return neighborhood_indices
 
 
 def resource_profit_based_reverse_neighborhood(solution, profits, resource_consumption, k=1):
     """
     Generates a neighborhood by replacing the best included items with the worst excluded items.
+    Returns an array where each element contains the indices of items to exclude and include.
 
     Args:
         solution (np.ndarray): Current solution vector (array of 0s and 1s).
@@ -157,55 +146,11 @@ def resource_profit_based_reverse_neighborhood(solution, profits, resource_consu
         k (int): Number of candidates to consider for replacements.
 
     Returns:
-        list of np.ndarray: The list of neighbors.
+        np.ndarray: A 2D array where each row contains indices to exclude and include.
     """
-    neighbors = []
-
     # Calculate profit/resource ratios
-    ratios = profits / (np.sum(resource_consumption, axis=0) + 1e-9)
-
-    # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
-    included_indices = np.where(solution == 1)[0]
-    excluded_indices = np.where(solution == 0)[0]
-
-    # Sort included items by descending ratio (best inclus)
-    included_sorted = included_indices[np.argsort(-ratios[included_indices])]
-
-    # Sort excluded items by ascending ratio (worst exclus)
-    excluded_sorted = excluded_indices[np.argsort(ratios[excluded_indices])]
-
-    # Generate neighbors by replacing k best included items with k worst excluded items
-    for i in range(min(k, len(included_sorted))):
-        for j in range(min(k, len(excluded_sorted))):
-            neighbor = solution.copy()
-
-            # Replace the best included item with the worst excluded item
-            neighbor[included_sorted[i]] = 0
-            neighbor[excluded_sorted[j]] = 1
-
-            neighbors.append(neighbor)
-
-    return neighbors
-
-
-def resource_profit_based_reverse_k_neighborhood(solution, profits, resource_consumption, k=1):
-    """
-    Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
-    between the worst included items and the best excluded items.
-
-    Args:
-        solution (np.ndarray): Current solution vector (array of 0s and 1s).
-        profits (np.ndarray): Array of profits for each item.
-        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
-        k (int): Number of candidates to consider for replacements.
-
-    Returns:
-        list of np.ndarray: The list of neighbors.
-    """
-    neighbors = []
-
-    # Calculate profit/resource ratios
-    ratios = profits / (np.sum(resource_consumption, axis=0) + 1e-9)
+    total_resources = np.sum(resource_consumption, axis=0)
+    ratios = np.divide(profits, total_resources, where=total_resources > 0, out=np.full(profits.shape, np.inf))
 
     # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
     included_indices = np.where(solution == 1)[0]
@@ -217,23 +162,61 @@ def resource_profit_based_reverse_k_neighborhood(solution, profits, resource_con
     # Sort excluded items by ascending ratio
     excluded_sorted = excluded_indices[np.argsort(ratios[excluded_indices])]
 
-    # Limit to the top k candidates for both included and excluded
-    worst_included = included_sorted[:k]
-    best_excluded = excluded_sorted[:k]
+    # Limit to k candidates for replacements
+    best_included = included_sorted[:k]
+    worst_excluded = excluded_sorted[:k]
 
-    # Generate neighbors by modifying 1, 2, ..., k pairs
-    for m in range(1, k + 1):
-        included_combinations = list(combinations(worst_included, m))
-        excluded_combinations = list(combinations(best_excluded, m))
+    # Generate all possible neighbors using broadcasting
+    included_expanded = np.repeat(best_included, len(worst_excluded))
+    excluded_expanded = np.tile(worst_excluded, len(best_included))
 
-        for inc_set, exc_set in zip(included_combinations, excluded_combinations):
-            neighbor = solution.copy()
+    # Combine results into a single array
+    neighborhood_indices = np.stack((included_expanded, excluded_expanded), axis=1)
 
-            # Apply modifications for m pairs
-            for inc_idx, exc_idx in zip(inc_set, exc_set):
-                neighbor[inc_idx] = 0  # Exclude the worst included item
-                neighbor[exc_idx] = 1  # Include the best excluded item
+    return neighborhood_indices
 
-            neighbors.append(neighbor)
 
-    return neighbors
+def resource_profit_based_reverse_k_neighborhood(solution, profits, resource_consumption, k=1):
+    """
+    Generates a neighborhood by replacing 1, 2, ..., k pairs of bits (inclusion/exclusion)
+    between the best included items and the worst excluded items.
+
+    Args:
+        solution (np.ndarray): Current solution vector (array of 0s and 1s).
+        profits (np.ndarray): Array of profits for each item.
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        k (int): Number of candidates to consider for replacements.
+
+    Returns:
+        np.ndarray: A 2D array where each row contains indices of items to exclude and include.
+    """
+    # Calculate profit/resource ratios
+    total_resources = np.sum(resource_consumption, axis=0)
+    ratios = np.divide(profits, total_resources, where=total_resources > 0, out=np.full(profits.shape, np.inf))
+
+    # Identify indices of included (x_i = 1) and excluded (x_i = 0) items
+    included_indices = np.where(solution == 1)[0]
+    excluded_indices = np.where(solution == 0)[0]
+
+    # Sort included items by descending ratio
+    included_sorted = included_indices[np.argsort(-ratios[included_indices])]
+
+    # Sort excluded items by ascending ratio
+    excluded_sorted = excluded_indices[np.argsort(ratios[excluded_indices])]
+
+    # Limit to the top k candidates for replacements
+    best_included = included_sorted[:k]
+    worst_excluded = excluded_sorted[:k]
+
+    # Generate all combinations for 1, 2, ..., k pairs
+    included_combinations = np.array(list(chain.from_iterable(combinations(best_included, m) for m in range(1, k + 1))))
+    excluded_combinations = np.array(list(chain.from_iterable(combinations(worst_excluded, m) for m in range(1, k + 1))))
+
+    # Use broadcasting to create all possible pairs
+    included_expanded = np.repeat(included_combinations, len(excluded_combinations), axis=0)
+    excluded_expanded = np.tile(excluded_combinations, (len(included_combinations), 1))
+
+    # Combine results into a single array
+    neighborhood_indices = np.hstack((included_expanded, excluded_expanded))
+
+    return neighborhood_indices

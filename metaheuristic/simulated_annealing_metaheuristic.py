@@ -28,23 +28,23 @@ def simulated_annealing_metaheuristic(N, resource_consumption, resource_availabi
         float: Total profit of the final solution.
     """
 
-    def initialize_temperature(solution):
+    def initialize_temperature():
         """
         Dynamically calculate the initial temperature using feasible neighbors.
         """
-        solution_profit = calculate_profit(solution, profits)
-        neighbors_indices = generate_neighbors(N, k)
+        solution_profit = calculate_profit(initial_solution, profits)
+        neighbors_indices = generate_neighbors(N, initial_solution, profits, resource_consumption, k)
         if neighbors_indices.size == 0:
             return 1000
 
         deltas = []
         for _ in range(20):  # Limit the number of sampled neighbors
             random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
-            neighbor = solution.copy()
+            neighbor = initial_solution.copy()
             neighbor[random_indices] ^= 1  # Flip bits
             
             # Calculate the profit difference incrementally
-            delta_profit = np.sum(profits[random_indices] * (neighbor[random_indices] - solution[random_indices]))
+            delta_profit = np.sum(profits[random_indices] * (neighbor[random_indices] - initial_solution[random_indices]))
             
             if is_feasible(neighbor, resource_consumption, resource_availabilities) and delta_profit > 0:
                 deltas.append(delta_profit)
@@ -61,7 +61,7 @@ def simulated_annealing_metaheuristic(N, resource_consumption, resource_availabi
 
     # Initialize temperature
     if initial_temperature is None:
-        temperature = initialize_temperature(current_solution)
+        temperature = initialize_temperature()
     else:
         temperature = initial_temperature
     
@@ -70,7 +70,7 @@ def simulated_annealing_metaheuristic(N, resource_consumption, resource_availabi
     while temperature > epsilon and time.time() - start_time < max_time:
         for _ in range(iter_max):
             # Generate a neighbor solution using the provided function
-            neighbors_indices = generate_neighbors(N, k)
+            neighbors_indices = generate_neighbors(N, current_solution, profits, resource_consumption, k)
             if neighbors_indices.size == 0:  # No neighbors to explore
                 current_solution = best_solution.copy()
                 current_profit = best_profit
