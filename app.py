@@ -243,7 +243,6 @@ def compare_methods(instance_name):
                 start_time_greedy = time.time()
                 greedy_solution, greedy_profit = greedy_heuristic(
                     instance['N'],
-                    instance['M'],
                     profits,
                     resource_consumption,
                     resource_availabilities
@@ -255,10 +254,8 @@ def compare_methods(instance_name):
 
                 # 2. Heuristique de réparation
                 start_time_repair = time.time()
-                initial_solution = surrogate_relaxation_mkp(instance['N'], instance['M'], resource_consumption, resource_availabilities, profits)
+                initial_solution = surrogate_relaxation_mkp(instance['N'], resource_consumption, resource_availabilities, profits)
                 repair_solution, repair_profit = repair_heuristic(initial_solution,
-                    instance['N'],
-                    instance['M'],
                     resource_consumption,
                     resource_availabilities,
                     profits
@@ -271,7 +268,6 @@ def compare_methods(instance_name):
                 start_time_hill_climbing = time.time()
                 hill_solution, hill_profit = hill_climbing(
                     instance['N'],
-                    instance['M'],
                     greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     resource_consumption,
                     resource_availabilities,
@@ -283,37 +279,35 @@ def compare_methods(instance_name):
                 hill_climbing_time = end_time_hill_climbing - start_time_hill_climbing
                 print(f"  - [Hill Climbing] Profit : {hill_profit:.2f}")
                 
-                # 4. VNS + Hill climbing
-                #start_time_vns = time.time()
-                #vns_solution, vns_profit = vns_hill_climbing(
-                #    instance['N'],
-                #    instance['M'],
-                #    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
-                #    resource_consumption,
-                #    resource_availabilities,
-                #    profits,
-                #    neighborhoods.multi_opt_neighborhood,
-                #    60,
-                #    3
-                #)
-                #end_time_vns = time.time()
-                #vns_time = end_time_vns - start_time_vns
-                #print(f"  - [VNS + Hill Climbing] Profit : {vns_profit:.2f}")
+                #4. VNS + Hill climbing
+                start_time_vns = time.time()
+                vns_solution, vns_profit = vns_hill_climbing(
+                    instance['N'],
+                    greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
+                    resource_consumption,
+                    resource_availabilities,
+                    profits,
+                    neighborhoods.multi_opt_neighborhood,
+                    1,
+                    3
+                )
+                end_time_vns = time.time()
+                vns_time = end_time_vns - start_time_vns
+                print(f"  - [VNS + Hill Climbing] Profit : {vns_profit:.2f}")
                 
-                # 5. SA
+                #5. SA
                 start_time_sa = time.time()
                 sa_solution, sa_profit = simulated_annealing_metaheuristic(
                     instance['N'],
-                    instance['M'],
                     resource_consumption,
                     resource_availabilities,
                     profits,
                     neighborhoods.multi_opt_neighborhood,
                     greedy_solution,  # Utilisation de la solution gloutonne comme point de départ
                     60,
-                    50,
+                    100,
                     None,
-                    0.9,
+                    0.95,
                     1e-5,
                     3
                 )
@@ -353,7 +347,7 @@ def compare_methods(instance_name):
                     print(f"  - Écart [Greedy] : {abs(instance['optimal_value'] - greedy_profit):.2f}")
                     print(f"  - Écart [Repair] : {abs(instance['optimal_value'] - repair_profit):.2f}")
                     print(f"  - Écart [Hill Climbing] : {abs(instance['optimal_value'] - hill_profit):.2f}")
-                    #print(f"  - Écart [VNS + Hill Climbing] : {abs(instance['optimal_value'] - vns_profit):.2f}")
+                    print(f"  - Écart [VNS + Hill Climbing] : {abs(instance['optimal_value'] - vns_profit):.2f}")
                     print(f"  - Écart [SA] : {abs(instance['optimal_value'] - sa_profit):.2f}")
                 #    print(f"  - Écart [Genetic] : {abs(instance['optimal_value'] - genetic_profit):.2f}")
                 #    print(f"  - Écart [SA IGA] : {abs(instance['optimal_value'] - sa_iga_profit):.2f}")
@@ -367,21 +361,21 @@ def compare_methods(instance_name):
                     "[Greedy] Profit": greedy_profit,
                     "[Repair] Profit": repair_profit,
                     "[Hill Climbing] Profit": hill_profit,
-                    #"[VNS + Hill Climbing] Profit": vns_profit,
+                    "[VNS + Hill Climbing] Profit": vns_profit,
                     "[SA] Profit": sa_profit,
                 #    "[Genetic] Profit": genetic_profit,
                 #    "[SA IGA] Profit": sa_iga_profit,
                     "Écart [Greedy]": abs(instance['optimal_value'] - greedy_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Repair]": abs(instance['optimal_value'] - repair_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [Hill Climbing]": abs(instance['optimal_value'] - hill_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
-                    #"Écart [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    "Écart [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Écart [SA]": abs(instance['optimal_value'] - sa_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                 #    "Écart [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                 #    "Écart [SA IGA]": abs(instance['optimal_value'] - sa_iga_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Temps [Greedy]": greedy_time,
                     "Temps [Repair]": repair_time,
                     "Temps [Hill Climbing]": hill_climbing_time,
-                    #"Temps [VNS + Hill Climbing]": vns_time,
+                    "Temps [VNS + Hill Climbing]": vns_time,
                     "Temps [SA]": sa_time,
                 #    "Temps [Genetic]": genetic_time,
                 #    "Temps [SA IGA]": sa_iga_time
