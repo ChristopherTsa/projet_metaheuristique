@@ -4,7 +4,7 @@ import random
 from utilities import calculate_profit, is_feasible
 
 
-def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_availabilities, profits, 
+def simulated_annealing_metaheuristic(N, resource_consumption, resource_availabilities, profits, 
                                   generate_neighbors, initial_solution, max_time, iter_max, initial_temperature=None, cooling_rate=0.95, epsilon=1e-3, k=3):
     """
     Implements the Simulated Annealing metaheuristic for the multidimensional knapsack problem.
@@ -30,28 +30,28 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
 
     def initialize_temperature(solution):
         """
-        Dynamically calculate the initial temperature using Method 2
+        Dynamically calculate the initial temperature using feasible neighbors.
         """
-        neighbors = generate_neighbors(solution, profits, resource_consumption, k)
-        # Filter neighbors to keep only feasible ones
-        feasible_neighbors = [
-            neighbor for neighbor in neighbors
-            if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
-        ]
-        if not feasible_neighbors:
-                return 1000
-        
-        delta_fs = []
-        for _ in range(20):  # Test a number of transformations
+        solution_profit = calculate_profit(solution, profits)
+        neighbors_indices = generate_neighbors(N, k)
+        if neighbors_indices.size == 0:
+            return 1000
+
+        deltas = []
+        for _ in range(20):  # Limit the number of sampled neighbors
+            random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
+            neighbor = solution.copy()
+            neighbor[random_indices] ^= 1  # Flip bits
             
-            neighbor = random.choice(feasible_neighbors)
+            # Calculate the profit difference incrementally
+            delta_profit = np.sum(profits[random_indices] * (neighbor[random_indices] - solution[random_indices]))
+            
+            if is_feasible(neighbor, resource_consumption, resource_availabilities) and delta_profit > 0:
+                deltas.append(delta_profit)
 
-            delta_f = calculate_profit(neighbor, profits) - calculate_profit(solution, profits)
-            if delta_f > 0:
-                delta_fs.append(delta_f)
+        mean_delta_f = np.mean(deltas) if deltas else 1
+        return -mean_delta_f / np.log(0.8)  # Initial acceptance probability = 0.8
 
-        mean_delta_f = np.mean(delta_fs) if delta_fs else 1
-        return -mean_delta_f / np.log(0.8)  # Assuming initial acceptance probability of 0.8
 
     # Utiliser la solution initiale fournie
     current_solution = initial_solution.copy()
@@ -68,34 +68,28 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
     start_time = time.time()
 
     while temperature > epsilon and time.time() - start_time < max_time:
-        print(temperature)
-        
         for _ in range(iter_max):
             # Generate a neighbor solution using the provided function
-            neighbors = generate_neighbors(current_solution, profits, resource_consumption, k)
-            
-            # Filter neighbors to keep only feasible ones
-            feasible_neighbors = [
-                neighbor for neighbor in neighbors
-                if is_feasible(neighbor, M, resource_consumption, resource_availabilities)
-            ]
-
-            # If no feasible neighbors exist, move to the next iteration
-            if not feasible_neighbors:
+            neighbors_indices = generate_neighbors(N, k)
+            if neighbors_indices.size == 0:  # No neighbors to explore
                 current_solution = best_solution.copy()
                 current_profit = best_profit
                 continue
-
-            # Choose a random feasible neighbor
-            neighbor = random.choice(feasible_neighbors)
-            neighbor_profit = calculate_profit(neighbor, profits)
-
-            # Decide whether to accept the neighbor
-            profit_difference = neighbor_profit - current_profit
             
-            if profit_difference >= 0:
-                current_solution = neighbor.copy()
-                current_profit = neighbor_profit
+            random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
+            neighbor = current_solution.copy()
+            neighbor[random_indices] ^= 1  # Flip bits
+            
+            # Check feasibility
+            if not is_feasible(neighbor, resource_consumption, resource_availabilities):
+                continue
+
+            # Calculate profit difference
+            delta_profit = np.sum(profits[random_indices] * (neighbor[random_indices] - current_solution[random_indices]))
+            
+            if delta_profit >= 0:
+                current_solution[random_indices] = neighbor[random_indices]
+                current_profit += delta_profit
 
                 # Update the best solution found
                 if current_profit > best_profit:
@@ -103,9 +97,9 @@ def simulated_annealing_metaheuristic(N, M, resource_consumption, resource_avail
                     best_profit = current_profit
                     
             else:
-                if np.random.random() < np.exp(profit_difference / temperature):
-                    current_solution = neighbor.copy()
-                    current_profit = neighbor_profit
+                if np.random.random() < np.exp(delta_profit / temperature):
+                    current_solution[random_indices] = neighbor[random_indices]
+                    current_profit += delta_profit
         
         # Cool down the temperature
         temperature *= cooling_rate
