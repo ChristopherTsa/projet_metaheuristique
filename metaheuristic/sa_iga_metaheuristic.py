@@ -5,38 +5,40 @@ from utilities import calculate_profit, is_feasible
 from metaheuristic.simulated_annealing_metaheuristic import simulated_annealing_metaheuristic
 
 
-def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, profits, generate_neighbors, 
-                         initial_temperature=None, cooling_rate=0.75, max_iterations_sa=10, epsilon=1e-3, 
-                         population_size=100, ngen=20, cxpb=0.7, mutpb=0.3):
+def sa_iga_metaheuristic(
+    N, M, resource_consumption, resource_availabilities, profits, generate_neighbors, 
+    initial_temperature=None, cooling_rate=0.75, max_iterations_sa=10, epsilon=1e-3, 
+    population_size=100, ngen=20, cxpb=0.7, mutpb=0.3
+):
     """
     Combines Simulated Annealing (SA) and Genetic Algorithm (GA) to solve the 0/1 MKP.
 
     Args:
-        N (int): Number of projects.
+        N (int): Number of items (projects).
         M (int): Number of resources.
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
         resource_availabilities (np.ndarray): Available resources for each type.
-        profits (np.ndarray): Array of profits for each project.
-        generate_neighbors (function): Function to generate a neighbor solution.
-        initial_temperature (float): Initial temperature for simulated annealing. If None, it is calculated dynamically.
-        cooling_rate (float): Rate at which the temperature decreases.
-        max_iterations_sa (int): Maximum iterations for SA.
-        epsilon (float): Minimum temperature threshold for SA.
-        population_size (int): Size of the population for GA.
-        ngen (int): Number of generations for GA.
+        profits (np.ndarray): Array of profits for each item.
+        generate_neighbors (function): Function to generate neighbor solutions.
+        initial_temperature (float, optional): Initial temperature for simulated annealing.
+        cooling_rate (float): Cooling rate for simulated annealing.
+        max_iterations_sa (int): Maximum iterations for simulated annealing.
+        epsilon (float): Minimum temperature threshold for simulated annealing.
+        population_size (int): Size of the population for genetic algorithm.
+        ngen (int): Number of generations for genetic algorithm.
         cxpb (float): Crossover probability.
         mutpb (float): Mutation probability.
 
     Returns:
-        np.ndarray: Best solution found.
-        float: Total profit of the best solution.
+        tuple:
+            - np.ndarray: Best solution found as a binary vector.
+            - float: Total profit of the best solution.
     """
     random.seed(42)  # For reproducibility
 
     # Create DEAP classes
     if "Fitness" in creator.__dict__:
         del creator.Fitness
-
     if "Individual" in creator.__dict__:
         del creator.Individual
     creator.create("Fitness", base.Fitness, weights=(1.0,))  # Maximization
@@ -49,12 +51,23 @@ def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, pro
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     def evaluate(individual):
-        """Evaluates an individual based on feasibility and profit."""
+        """
+        Evaluates an individual based on feasibility and profit.
+
+        Args:
+            individual (list): Binary representation of the solution.
+
+        Returns:
+            tuple: Fitness value as a single-element tuple.
+        """
         if is_feasible(individual, M, resource_consumption, resource_availabilities):
             return calculate_profit(individual, profits),
         else:
             # Penalize infeasible solutions
-            total_weight = [sum(resource_consumption[d][i] * individual[i] for i in range(N)) for d in range(M)]
+            total_weight = [
+                sum(resource_consumption[d][i] * individual[i] for i in range(N))
+                for d in range(M)
+            ]
             penalty = sum(max(0, total_weight[d] - resource_availabilities[d]) for d in range(M))
             return calculate_profit(individual, profits) - penalty,
 
@@ -67,7 +80,7 @@ def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, pro
     # Initialize population
     pop = toolbox.population(n=population_size)
 
-    # Statistics
+    # Statistics tracking
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", np.mean)
     stats.register("min", np.min)
@@ -75,7 +88,8 @@ def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, pro
 
     # Genetic Algorithm loop
     for gen in range(ngen):
-        print(gen)
+        print(f"Generation {gen}")
+
         # Evaluate individuals
         for ind in pop:
             ind.fitness.values = toolbox.evaluate(ind)
@@ -111,9 +125,11 @@ def sa_iga_metaheuristic(N,M, resource_consumption, resource_availabilities, pro
             ind[:] = sa_solution.tolist()
             ind.fitness.values = (sa_profit,)
 
-        # Replace population with offspring
+        # Replace the current population with offspring
         pop[:] = offspring
 
     # Extract the best individual
     best_ind = tools.selBest(pop, 1)[0]
-    return np.array(best_ind), calculate_profit(best_ind, profits)
+    best_profit = calculate_profit(best_ind, profits)
+
+    return np.array(best_ind), best_profit

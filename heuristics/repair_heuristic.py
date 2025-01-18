@@ -4,21 +4,19 @@ from utilities import calculate_profit
 
 def compute_multipliers(resource_consumption, resource_availabilities):
     """
-    Calcule les multiplicateurs lambda basés sur la tension des ressources.
+    Compute resource multipliers (lambda) based on resource tightness.
 
     Args:
-        N (int): Nombre de projets.
-        M (int): Nombre de ressources.
-        resource_consumption (np.ndarray): Consommation des ressources (M x N).
-        resource_availabilities (np.ndarray): Disponibilités des ressources (M).
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        resource_availabilities (np.ndarray): Available resources (M).
 
     Returns:
-        np.ndarray: Tableau des multiplicateurs lambda (M).
+        np.ndarray: Array of lambda multipliers (M), normalized by total tightness.
     """
-    # Calcul vectorisé de la tension
+    # Calculate resource tightness as the ratio of total consumption to availability
     tightness = np.sum(resource_consumption, axis=1) / resource_availabilities
 
-    # Normalisation pour obtenir les multiplicateurs lambda
+    # Normalize tightness to compute lambda multipliers
     total_tightness = np.sum(tightness)
     multipliers = tightness / total_tightness
 
@@ -27,84 +25,85 @@ def compute_multipliers(resource_consumption, resource_availabilities):
 
 def surrogate_relaxation_mkp(N, resource_consumption, resource_availabilities, profits):
     """
-    Résolution de la relaxation surrogate du problème MKP.
+    Solve the surrogate relaxation of the Multiple Knapsack Problem (MKP).
 
     Args:
-        N (int): Nombre de projets.
-        M (int): Nombre de ressources.
-        resource_consumption (np.ndarray): Matrice de consommation des ressources (M x N).
-        resource_availabilities (np.ndarray): Disponibilité des ressources (M).
-        profits (np.ndarray): Profits associés aux projets.
+        N (int): Number of projects.
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        resource_availabilities (np.ndarray): Available resources (M).
+        profits (np.ndarray): Profits associated with each project.
 
     Returns:
-        np.ndarray: Solution binaire (0 ou 1) pour chaque projet.
+        np.ndarray: Binary solution array (0 or 1) indicating selected projects.
     """
-    # Calcul des multiplicateurs avec la fonction optimisée
+    # Compute resource multipliers using the optimized function
     multipliers = compute_multipliers(resource_consumption, resource_availabilities)
 
-    # Calcul vectorisé des poids surrogates et de la capacité surrogate
-    surrogate_weights = np.dot(multipliers, resource_consumption)  # Produit matriciel pour les poids
-    surrogate_capacity = np.dot(multipliers, resource_availabilities)  # Produit scalaire pour la capacité
+    # Compute surrogate weights and surrogate capacity using matrix operations
+    surrogate_weights = np.dot(multipliers, resource_consumption)  # Weighted sum of resource consumption
+    surrogate_capacity = np.dot(multipliers, resource_availabilities)  # Weighted sum of resource availabilities
 
-    # Calcul vectorisé des ratios profit / poids
-    valid_weights_mask = surrogate_weights > 0  # Filtrer les poids valides
+    # Compute profit-to-weight ratios for valid weights
+    valid_weights_mask = surrogate_weights > 0  # Filter out invalid (zero or negative) weights
     ratios = profits[valid_weights_mask] / surrogate_weights[valid_weights_mask]
-    valid_indices = np.where(valid_weights_mask)[0]  # Indices des poids valides
+    valid_indices = np.where(valid_weights_mask)[0]  # Indices of valid weights
 
-    # Tri des projets par ordre décroissant de ratios
-    sorted_indices = valid_indices[np.argsort(-ratios)]  # Indices triés selon les ratios décroissants
+    # Sort projects in descending order of profit-to-weight ratio
+    sorted_indices = valid_indices[np.argsort(-ratios)]
 
-    # Construction de la solution
+    # Initialize solution and cumulative weight
     solution = np.zeros(N, dtype=np.int32)
     cumulative_weight = 0
 
-    # Parcours vectorisé des projets triés pour respecter la capacité
+    # Iterate through sorted projects and add to the solution if feasible
     for j in sorted_indices:
         if cumulative_weight + surrogate_weights[j] <= surrogate_capacity:
-            solution[j] = 1
-            cumulative_weight += surrogate_weights[j]
+            solution[j] = 1  # Select the project
+            cumulative_weight += surrogate_weights[j]  # Update the cumulative weight
 
     return solution
 
 
 def repair_heuristic(initial_solution, resource_consumption, resource_availabilities, profits):
     """
-    Répare une solution pour le problème MKP en respectant les contraintes.
+    Repair an infeasible solution for the MKP by satisfying resource constraints.
 
     Args:
-        initial_solution (np.ndarray): Solution initiale (binaire).
-        N (int): Nombre de projets.
-        M (int): Nombre de ressources.
-        resource_consumption (np.ndarray): Consommation des ressources (M x N).
-        resource_availabilities (np.ndarray): Disponibilités des ressources (M).
-        profits (np.ndarray): Profits associés aux projets.
+        initial_solution (np.ndarray): Initial binary solution array.
+        resource_consumption (np.ndarray): Resource consumption matrix (M x N).
+        resource_availabilities (np.ndarray): Available resources (M).
+        profits (np.ndarray): Profits associated with each project.
 
     Returns:
-        tuple: Solution réparée (binaire) et profit total.
+        tuple: 
+            - np.ndarray: Repaired binary solution.
+            - float: Total profit of the repaired solution.
     """
-    # Copie de la solution initiale
+    # Create a copy of the initial solution to avoid modifying the input
     solution = initial_solution.copy()
 
-    # Calcul vectorisé du poids total pour chaque contrainte
+    # Calculate the total resource usage for each constraint
     total_weights = np.dot(resource_consumption, solution)
 
-    # Réparation des contraintes violées
+    # Repair infeasibility by removing projects until constraints are satisfied
     while np.any(total_weights > resource_availabilities):
-        # Calcul des ratios profit / coût pour les projets actifs
+        # Identify active projects (selected in the solution)
         active_projects = solution == 1
+
+        # Calculate profit-to-cost ratio for active projects
         resource_costs = np.sum(resource_consumption[:, active_projects], axis=0)
         ratios = profits[active_projects] / resource_costs
 
-        # Trouver le projet à retirer (plus petit ratio profit / coût)
+        # Identify the project with the smallest profit-to-cost ratio to remove
         item_to_remove = np.where(active_projects)[0][np.argmin(ratios)]
 
-        # Mise à jour de la solution
+        # Update the solution to remove the selected project
         solution[item_to_remove] = 0
 
-        # Mise à jour des ressources consommées
+        # Update the total resource usage after removing the project
         total_weights -= resource_consumption[:, item_to_remove]
 
-    # Calcul du profit total
+    # Calculate the total profit of the repaired solution
     total_profit = calculate_profit(solution, profits)
 
     return solution, total_profit
