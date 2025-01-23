@@ -5,7 +5,9 @@ from heuristics.repair_heuristic import repair_heuristic
 import numpy as np
 
 
-def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, profits):
+def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, profits,
+                          popsize=200, cxpb=0.7, mutpb=0.2, ngen=150,
+                          uniform_crossover_prob=0.5, bitflip_mutation_prob=0.2, tournament_size=3):
     """
     Implements a genetic algorithm to solve the multidimensional knapsack problem.
 
@@ -15,6 +17,13 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
         resource_consumption (np.ndarray): Resource consumption matrix (M x N).
         resource_availabilities (np.ndarray): Available resources for each type.
         profits (np.ndarray): Array of profits for each item.
+        popsize (int): Population size.
+        cxpb (float): Crossover probability.
+        mutpb (float): Mutation probability.
+        ngen (int): Number of generations.
+        uniform_crossover_prob (float): Probability of swapping genes during crossover.
+        bitflip_mutation_prob (float): Probability of flipping each bit during mutation.
+        tournament_size (int): Number of individuals participating in each tournament.
 
     Returns:
         tuple:
@@ -98,12 +107,12 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
 
     # Register functions in the toolbox
     toolbox.register("evaluate", evaluate)
-    toolbox.register("mate", uniform_crossover, indpb=0.5)
-    toolbox.register("mutate", bit_flip_mutation, indpb=0.2)
-    toolbox.register("select", tools.selTournament, tournsize=3)
+    toolbox.register("mate", uniform_crossover, indpb=uniform_crossover_prob)
+    toolbox.register("mutate", bit_flip_mutation, indpb=bitflip_mutation_prob)
+    toolbox.register("select", tools.selTournament, tournsize=tournament_size)
 
     # Initialize population
-    pop = toolbox.population(n=200)
+    pop = toolbox.population(n=popsize)
 
     # Configure statistics tracking
     stats = tools.Statistics(lambda ind: ind.fitness.values)
@@ -113,7 +122,7 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
 
     # Run the genetic algorithm
     pop, log = algorithms.eaSimple(
-        pop, toolbox, cxpb=0.7, mutpb=0.2, ngen=150, stats=stats, verbose=True
+        pop, toolbox, cxpb=cxpb, mutpb=mutpb, ngen=ngen, stats=stats, verbose=True
     )
 
     # Extract the best solution
@@ -143,7 +152,3 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
     print("\nFeasibility:", feasible)
     
     return best_ind, total_profit
-
-
-if __name__ == "__main__":
-    genetic_metaheuristic()
