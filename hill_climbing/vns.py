@@ -38,21 +38,23 @@ def vns_hill_climbing(
         while k <= k_max:
             # Generate neighbors for the current neighborhood
             neighbors_indices = generate_neighbors(N, current_solution, profits, resource_consumption, k)
-
+            
             if neighbors_indices.size == 0:  # If no neighbors are available, move to the next neighborhood
+                print(neighbors_indices.size)
                 k += 1
                 continue
             
             # Select a random neighbor from the generated neighbors
-            random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
             random_neighbor = current_solution.copy()
-            random_neighbor[random_indices] ^= 1  # Flip bits using XOR for efficiency
 
-            # Ensure the random neighbor is feasible by checking resource constraints
-            while not is_feasible(random_neighbor, resource_consumption, resource_availabilities):
+            while True:
                 random_indices = neighbors_indices[np.random.randint(neighbors_indices.shape[0])]
-                random_neighbor = current_solution.copy()
-                random_neighbor[random_indices] ^= 1
+                random_neighbor[random_indices] ^= 1  # Flip bits using XOR for efficiency
+
+                if is_feasible(random_neighbor, resource_consumption, resource_availabilities):
+                    break
+
+                random_neighbor[random_indices] ^= 1  # Revert the flip if not feasible
 
             # Apply Hill Climbing to improve the feasible random neighbor
             local_solution, local_profit = hill_climbing(
