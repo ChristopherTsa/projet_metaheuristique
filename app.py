@@ -67,7 +67,7 @@ if __name__ == "__main__":
     }
     
     instance_name = "mknap1"
-    max_instances = 1
+    max_instances = 10
     data = read_knapsack_data(instance_name)
     print("Instance: ", instance_name)
     
