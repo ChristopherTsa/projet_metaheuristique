@@ -72,7 +72,7 @@ if __name__ == "__main__":
     print("Instance: ", instance_name)
     
     print("Hill Climbing")
-    gs.grid_search_hc(data, instance_name, hc_parameter_grid, max_instances)
+    #gs.grid_search_hc(data, instance_name, hc_parameter_grid, max_instances)
     
     print("VNS")
     gs.grid_search_vns(data, instance_name, vns_parameter_grid, max_instances)
