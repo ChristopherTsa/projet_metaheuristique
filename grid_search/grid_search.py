@@ -19,7 +19,7 @@ def ensure_directory_exists(directory):
         os.makedirs(directory)
 
 
-def grid_search_hill_climbing(data, instance_name, parameter_grid, max_instances=5):
+def grid_search_hc(data, instance_name, parameter_grid, max_instances=5):
     """
     Performs a grid search over hyperparameters for the Hill Climbing algorithm.
 
@@ -57,6 +57,8 @@ def grid_search_hill_climbing(data, instance_name, parameter_grid, max_instances
             params = dict(zip(parameter_grid.keys(), combination))
             hc_neighbors = params.get('hc_neighbors', n.multi_opt_neighborhood)
             hc_k = params.get('hc_k', 3)
+            
+            print(f"Processing instance {i + 1} with parameters: {params}")
 
             try:
                 start_time = time.time()
@@ -82,9 +84,9 @@ def grid_search_hill_climbing(data, instance_name, parameter_grid, max_instances
             except Exception as e:
                 print(f"Error with parameters {params}: {e}")
 
-        results_df = pd.DataFrame(results)
-        output_file = os.path.join(output_dir, f"{instance_name}_instance_{i + 1}.csv")
-        results_df.to_csv(output_file, index=False)
+    results_df = pd.DataFrame(results)
+    output_file = os.path.join(output_dir, f"{instance_name}.csv")
+    results_df.to_csv(output_file, index=False)
 
     print("\nHill Climbing grid search completed. Results saved to:", output_dir)
     return results_df
@@ -126,6 +128,8 @@ def grid_search_ga(data, instance_name, parameter_grid, max_instances=5):
             uniform_crossover_prob = params.get('uniform_crossover_prob', 0.5)
             bitflip_mutation_prob = params.get('bitflip_mutation_prob', 0.2)
             tournament_size = params.get('tournament_size', 3)
+            
+            print(f"Processing instance {i + 1} with parameters: {params}")
 
             try:
                 start_time = time.time()
@@ -161,9 +165,9 @@ def grid_search_ga(data, instance_name, parameter_grid, max_instances=5):
             except Exception as e:
                 print(f"Error with parameters {params}: {e}")
 
-        results_df = pd.DataFrame(results)
-        output_file = os.path.join(output_dir, f"{instance_name}_instance_{i + 1}.csv")
-        results_df.to_csv(output_file, index=False)
+    results_df = pd.DataFrame(results)
+    output_file = os.path.join(output_dir, f"{instance_name}.csv")
+    results_df.to_csv(output_file, index=False)
 
     print("\nGenetic Algorithm grid search completed. Results saved to:", output_dir)
     return results_df
@@ -219,6 +223,8 @@ def grid_search_vns(data, instance_name, parameter_grid, max_instances=5):
             vns_max_duration = params.get('vns_max_duration', 60)
             vns_neighborhood_degree = params.get('vns_neighborhood_degree', 2)
             vns_neighborhood = params.get('vns_neighborhood', n.multi_opt_neighborhood)
+            
+            print(f"Processing instance {i + 1} with parameters: {params}")
 
             try:
                 # VNS + Hill Climbing
@@ -229,9 +235,9 @@ def grid_search_vns(data, instance_name, parameter_grid, max_instances=5):
                     resource_consumption,
                     resource_availabilities,
                     profits,
-                    neighborhoods=vns_neighborhood,
-                    max_duration=vns_max_duration,
-                    neighborhood_degree=vns_neighborhood_degree
+                    generate_neighbors=vns_neighborhood,
+                    max_time=vns_max_duration,
+                    k_max=vns_neighborhood_degree
                 )
                 vns_time = time.time() - start_time_vns
 
@@ -248,10 +254,10 @@ def grid_search_vns(data, instance_name, parameter_grid, max_instances=5):
             except Exception as e:
                 print(f"Error with parameters {params}: {e}")
 
-        # Save results for this instance
-        results_df = pd.DataFrame(results)
-        output_file = os.path.join(output_dir, f"{instance_name}_instance_{i + 1}.csv")
-        results_df.to_csv(output_file, index=False)
+    # Save results for this instance file
+    results_df = pd.DataFrame(results)
+    output_file = os.path.join(output_dir, f"{instance_name}.csv")
+    results_df.to_csv(output_file, index=False)
 
     print("\nVNS grid search completed. Results saved to:", output_dir)
     return results_df
@@ -308,6 +314,8 @@ def grid_search_sa(data, instance_name, parameter_grid, max_instances=5):
             sa_neighborhood = params.get('sa_neighborhood', n.multi_opt_neighborhood)
             sa_max_duration = params.get('sa_max_duration', 300)
             sa_iter_max = params.get('sa_max_iter', 1000)
+            
+            print(f"Processing instance {i + 1} with parameters: {params}")
 
             try:
                 # Simulated Annealing
@@ -319,10 +327,10 @@ def grid_search_sa(data, instance_name, parameter_grid, max_instances=5):
                     profits,
                     generate_neighbors=sa_neighborhood,
                     initial_solution=greedy_solution,
-                    max_duration=sa_max_duration,
+                    max_time=sa_max_duration,
                     iter_max=sa_iter_max,
                     cooling_rate=sa_cooling_rate,
-                    neighborhood_degree=sa_neighborhood_degree
+                    k=sa_neighborhood_degree
                 )
                 sa_time = time.time() - start_time_sa
 
@@ -341,13 +349,14 @@ def grid_search_sa(data, instance_name, parameter_grid, max_instances=5):
             except Exception as e:
                 print(f"Error with parameters {params}: {e}")
 
-        # Save results for this instance
-        results_df = pd.DataFrame(results)
-        output_file = os.path.join(output_dir, f"{instance_name}_instance_{i + 1}.csv")
-        results_df.to_csv(output_file, index=False)
+    # Save results for this instance
+    results_df = pd.DataFrame(results)
+    output_file = os.path.join(output_dir, f"{instance_name}.csv")
+    results_df.to_csv(output_file, index=False)
 
     print("\nSA grid search completed. Results saved to:", output_dir)
     return results_df
+
 
 def plot_results(instance_name, method):
     """
