@@ -44,14 +44,18 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
 
     # Initialize the DEAP toolbox
     toolbox = base.Toolbox()
-
+    
     # Generate feasible individuals using the repair heuristic
     def generate_feasible_individual():
-        initial_solution = [random.randint(0, 1) for _ in range(N)]
-        repaired_solution, _ = repair_heuristic(
-            initial_solution, N, M, resource_consumption, resource_availabilities, profits
-        )
-        return creator.Individual(repaired_solution)
+        initial_solution = np.array([random.randint(0, 1) for _ in range(N)])
+        if not is_feasible(initial_solution, resource_consumption, resource_availabilities):
+            repaired_solution, _ = repair_heuristic(
+                initial_solution, resource_consumption, resource_availabilities, profits
+            )
+            return creator.Individual(repaired_solution)
+        else:
+            return creator.Individual(initial_solution)
+        
     
     toolbox.register("individual", generate_feasible_individual)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
@@ -119,33 +123,34 @@ def genetic_metaheuristic(N, M, resource_consumption, resource_availabilities, p
     stats.register("avg", np.mean)
     stats.register("min", np.min)
     stats.register("max", np.max)
-
+    
     # Run the genetic algorithm
     pop, log = algorithms.eaSimple(
         pop, toolbox, cxpb=cxpb, mutpb=mutpb, ngen=ngen, stats=stats, verbose=True
     )
-
+    
     # Extract the best solution
-    best_ind = tools.selBest(pop, 1)[0]
+    best_ind = np.array(tools.selBest(pop, 1)[0])
     total_profit = calculate_profit(best_ind, profits)
     print("\nBest Solution:", best_ind)
     print("\nTotal Profit:", total_profit)
 
     # Ensure the solution is feasible
     feasible = is_feasible(
-        solution=best_ind, M=M, 
+        solution=best_ind, 
         resource_consumption=resource_consumption, 
         resource_availabilities=resource_availabilities
     )
 
     while not feasible:
         best_ind, total_profit = repair_heuristic(
-            initial_solution=best_ind, N=N, M=M, 
+            initial_solution=best_ind, 
             resource_consumption=resource_consumption, 
-            resource_availabilities=resource_availabilities, profits=profits
+            resource_availabilities=resource_availabilities,
+            profits=profits
         )
         feasible = is_feasible(
-            solution=best_ind, M=M, 
+            solution=best_ind,
             resource_consumption=resource_consumption, 
             resource_availabilities=resource_availabilities
         )
