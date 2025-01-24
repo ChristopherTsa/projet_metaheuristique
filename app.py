@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 import test
-import grid_search as gs
+import grid_search.grid_search as gs
 
 from utilities import read_knapsack_data
 from heuristics.greedy_heuristic import greedy_heuristic
@@ -67,14 +67,22 @@ if __name__ == "__main__":
     }
     
     instance_name = "mknap1"
+    max_instances = 1
     data = read_knapsack_data(instance_name)
-
-    gs.grid_search_hc(data, instance_name, hc_parameter_grid, max_instances=5)
-    gs.grid_search_vns(data, instance_name, vns_parameter_grid, max_instances=5)
-    gs.grid_search_sa(data, instance_name, sa_parameter_grid, max_instances=5)
-    gs.grid_search_ga(data, instance_name, ga_parameter_grid, max_instances=5)
+    print("Instance: ", instance_name)
+    
+    print("Hill Climbing")
+    gs.grid_search_hc(data, instance_name, hc_parameter_grid, max_instances)
+    
+    print("VNS")
+    gs.grid_search_vns(data, instance_name, vns_parameter_grid, max_instances)
+    
+    print("Simulated Annealing")
+    gs.grid_search_sa(data, instance_name, sa_parameter_grid, max_instances)
+    
+    print("Genetic Algorithm")
+    gs.grid_search_ga(data, instance_name, ga_parameter_grid, max_instances)
     
 
     #plot_results("mknap1", "vns")
     #plot_results("mknap1", "sa")
-
