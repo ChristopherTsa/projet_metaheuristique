@@ -523,37 +523,37 @@ def compare_methods(instance_name, max_instances=5):
                 print(f"  - [VNS + Hill Climbing] Profit: {vns_profit:.2f}")
 
                 # 5. Simulated Annealing
-                start_time_sa = time.time()
-                sa_solution, sa_profit = simulated_annealing_metaheuristic(
-                    instance['N'],
-                    resource_consumption,
-                    resource_availabilities,
-                    profits,
-                    neighborhoods.multi_opt_neighborhood,
-                    greedy_solution,  # Use greedy solution as starting point
-                    300,  # Maximum duration
-                    100,  # Maximum iterations
-                    None, # Initial temperature
-                    0.95,  # Cooling rate
-                    1e-5,  # Convergence threshold
-                    2   # Neighborhood degree
-                )
-                end_time_sa = time.time()
-                sa_time = end_time_sa - start_time_sa
-                print(f"  - [SA] Profit: {sa_profit:.2f}")
+                #start_time_sa = time.time()
+                #sa_solution, sa_profit = simulated_annealing_metaheuristic(
+                #    instance['N'],
+                #    resource_consumption,
+                #    resource_availabilities,
+                #    profits,
+                #    neighborhoods.multi_opt_neighborhood,
+                #    greedy_solution,  # Use greedy solution as starting point
+                #    300,  # Maximum duration
+                #    100,  # Maximum iterations
+                #    None, # Initial temperature
+                #    0.95,  # Cooling rate
+                #    1e-5,  # Convergence threshold
+                #    2   # Neighborhood degree
+                #)
+                #end_time_sa = time.time()
+                #sa_time = end_time_sa - start_time_sa
+                #print(f"  - [SA] Profit: {sa_profit:.2f}")
 
                 # 6. Genetic Algorithm
-                # start_time_genetic = time.time()
-                # genetic_solution, genetic_profit = genetic_metaheuristic(
-                #     instance['N'],
-                #     instance['M'],
-                #     resource_consumption,
-                #     resource_availabilities,
-                #     profits
-                # )
-                # end_time_genetic = time.time()
-                # genetic_time = end_time_genetic - start_time_genetic
-                # print(f"  - [Genetic] Profit: {genetic_profit:.2f}")
+                start_time_genetic = time.time()
+                genetic_solution, genetic_profit = genetic_metaheuristic(
+                    instance['N'],
+                    instance['M'],
+                    resource_consumption,
+                    resource_availabilities,
+                    profits
+                )
+                end_time_genetic = time.time()
+                genetic_time = end_time_genetic - start_time_genetic
+                print(f"  - [Genetic] Profit: {genetic_profit:.2f}")
 
                 # 7. SA IGA
                 # start_time_sa_iga = time.time()
@@ -575,8 +575,8 @@ def compare_methods(instance_name, max_instances=5):
                     # print(f"  - Deviation [Repair]: {abs(instance['optimal_value'] - repair_profit):.2f}")
                     # print(f"  - Deviation [Hill Climbing]: {abs(instance['optimal_value'] - hill_profit):.2f}")
                     print(f"  - Deviation [VNS + Hill Climbing]: {abs(instance['optimal_value'] - vns_profit):.2f}")
-                    print(f"  - Deviation [SA]: {abs(instance['optimal_value'] - sa_profit):.2f}")
-                    # print(f"  - Deviation [Genetic]: {abs(instance['optimal_value'] - genetic_profit):.2f}")
+                    # print(f"  - Deviation [SA]: {abs(instance['optimal_value'] - sa_profit):.2f}")
+                    print(f"  - Deviation [Genetic]: {abs(instance['optimal_value'] - genetic_profit):.2f}")
                     # print(f"  - Deviation [SA IGA]: {abs(instance['optimal_value'] - sa_iga_profit):.2f}")
 
                 # Save results to the CSV file
@@ -589,23 +589,23 @@ def compare_methods(instance_name, max_instances=5):
                     # "[Repair] Profit": repair_profit,
                     # "[Hill Climbing] Profit": hill_profit,
                     "[VNS + Hill Climbing] Profit": vns_profit,
-                    "[SA] Profit": sa_profit,
-                    # "[Genetic] Profit": genetic_profit,  # Commented
-                    # "[SA IGA] Profit": sa_iga_profit,  # Commented
+                    # "[SA] Profit": sa_profit,
+                    "[Genetic] Profit": genetic_profit,
+                    # "[SA IGA] Profit": sa_iga_profit,
                     # "Deviation [Greedy]": abs(instance['optimal_value'] - greedy_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     # "Deviation [Repair]": abs(instance['optimal_value'] - repair_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     # "Deviation [Hill Climbing]": abs(instance['optimal_value'] - hill_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     "Deviation [VNS + Hill Climbing]": abs(instance['optimal_value'] - vns_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
-                    "Deviation [SA]": abs(instance['optimal_value'] - sa_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
-                    # "Deviation [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    # "Deviation [SA]": abs(instance['optimal_value'] - sa_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
+                    "Deviation [Genetic]": abs(instance['optimal_value'] - genetic_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     # "Deviation [SA IGA]": abs(instance['optimal_value'] - sa_iga_profit) / instance['optimal_value'] if instance['optimal_value'] else None,
                     # "Time [Greedy]": greedy_time,
                     # "Time [Repair]": repair_time,
                     # "Time [Hill Climbing]": hill_climbing_time,
                     "Time [VNS + Hill Climbing]": vns_time,
-                    "Time [SA]": sa_time,
-                    # "Time [Genetic]": genetic_time,  # Commented
-                    # "Time [SA IGA]": sa_iga_time  # Commented
+                    #"Time [SA]": sa_time,
+                    "Time [Genetic]": genetic_time,
+                    # "Time [SA IGA]": sa_iga_time
                 }
 
                 # Append results to the CSV file

@@ -66,23 +66,25 @@ if __name__ == "__main__":
         'ga_tournament_size': [2, 3, 4]
     }
     
-    instance_name = "mknap1"
-    max_instances = 10
-    data = read_knapsack_data(instance_name)
-    print("Instance: ", instance_name)
+    #instance_name = "mknap1"
+    #max_instances = 10
+    #data = read_knapsack_data(instance_name)
+    #print("Instance: ", instance_name)
     
-    print("Hill Climbing")
+    #print("Hill Climbing")
     #gs.grid_search_hc(data, instance_name, hc_parameter_grid, max_instances)
     
-    print("VNS")
-    gs.grid_search_vns(data, instance_name, vns_parameter_grid, max_instances)
+    #print("VNS")
+    #gs.grid_search_vns(data, instance_name, vns_parameter_grid, max_instances)
     
-    print("Simulated Annealing")
-    gs.grid_search_sa(data, instance_name, sa_parameter_grid, max_instances)
+    #print("Simulated Annealing")
+    #gs.grid_search_sa(data, instance_name, sa_parameter_grid, max_instances)
     
-    print("Genetic Algorithm")
-    gs.grid_search_ga(data, instance_name, ga_parameter_grid, max_instances)
+    #print("Genetic Algorithm")
+    #gs.grid_search_ga(data, instance_name, ga_parameter_grid, max_instances)
     
 
     #plot_results("mknap1", "vns")
     #plot_results("mknap1", "sa")
+    
+    test.compare_methods("gk09", max_instances=10)

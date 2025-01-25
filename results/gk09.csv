@@ -1,0 +1,1 @@
+Instance,Number of projects (N),Number of resources (M),Optimal profit,[Greedy] Profit,[Repair] Profit,[Hill Climbing] Profit,[VNS + Hill Climbing] Profit,[SA] Profit,Deviation [Greedy],Deviation [Repair],Deviation [Hill Climbing],Deviation [VNS + Hill Climbing],Deviation [SA],Time [Greedy],Time [Repair],Time [Hill Climbing],Time [VNS + Hill Climbing],Time [SA]
